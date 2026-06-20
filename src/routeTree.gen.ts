@@ -14,7 +14,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedPoliciesIndexRouteImport } from './routes/_authenticated/policies.index'
 import { Route as AuthenticatedHouseholdsIndexRouteImport } from './routes/_authenticated/households.index'
+import { Route as AuthenticatedPoliciesNewRouteImport } from './routes/_authenticated/policies.new'
+import { Route as AuthenticatedPoliciesIdRouteImport } from './routes/_authenticated/policies.$id'
 import { Route as AuthenticatedHouseholdsNewRouteImport } from './routes/_authenticated/households.new'
 import { Route as AuthenticatedHouseholdsIdRouteImport } from './routes/_authenticated/households.$id'
 
@@ -42,12 +45,29 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPoliciesIndexRoute =
+  AuthenticatedPoliciesIndexRouteImport.update({
+    id: '/policies/',
+    path: '/policies/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHouseholdsIndexRoute =
   AuthenticatedHouseholdsIndexRouteImport.update({
     id: '/households/',
     path: '/households/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPoliciesNewRoute =
+  AuthenticatedPoliciesNewRouteImport.update({
+    id: '/policies/new',
+    path: '/policies/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPoliciesIdRoute = AuthenticatedPoliciesIdRouteImport.update({
+  id: '/policies/$id',
+  path: '/policies/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHouseholdsNewRoute =
   AuthenticatedHouseholdsNewRouteImport.update({
     id: '/households/new',
@@ -68,7 +88,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/policies/$id': typeof AuthenticatedPoliciesIdRoute
+  '/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/households/': typeof AuthenticatedHouseholdsIndexRoute
+  '/policies/': typeof AuthenticatedPoliciesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,7 +100,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/policies/$id': typeof AuthenticatedPoliciesIdRoute
+  '/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/households': typeof AuthenticatedHouseholdsIndexRoute
+  '/policies': typeof AuthenticatedPoliciesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,7 +114,10 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/_authenticated/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/_authenticated/policies/$id': typeof AuthenticatedPoliciesIdRoute
+  '/_authenticated/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/_authenticated/households/': typeof AuthenticatedHouseholdsIndexRoute
+  '/_authenticated/policies/': typeof AuthenticatedPoliciesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,7 +128,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/households/$id'
     | '/households/new'
+    | '/policies/$id'
+    | '/policies/new'
     | '/households/'
+    | '/policies/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,7 +140,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/households/$id'
     | '/households/new'
+    | '/policies/$id'
+    | '/policies/new'
     | '/households'
+    | '/policies'
   id:
     | '__root__'
     | '/'
@@ -118,7 +153,10 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/households/$id'
     | '/_authenticated/households/new'
+    | '/_authenticated/policies/$id'
+    | '/_authenticated/policies/new'
     | '/_authenticated/households/'
+    | '/_authenticated/policies/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,11 +203,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/policies/': {
+      id: '/_authenticated/policies/'
+      path: '/policies'
+      fullPath: '/policies/'
+      preLoaderRoute: typeof AuthenticatedPoliciesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/households/': {
       id: '/_authenticated/households/'
       path: '/households'
       fullPath: '/households/'
       preLoaderRoute: typeof AuthenticatedHouseholdsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/policies/new': {
+      id: '/_authenticated/policies/new'
+      path: '/policies/new'
+      fullPath: '/policies/new'
+      preLoaderRoute: typeof AuthenticatedPoliciesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/policies/$id': {
+      id: '/_authenticated/policies/$id'
+      path: '/policies/$id'
+      fullPath: '/policies/$id'
+      preLoaderRoute: typeof AuthenticatedPoliciesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/households/new': {
@@ -193,14 +252,20 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHouseholdsIdRoute: typeof AuthenticatedHouseholdsIdRoute
   AuthenticatedHouseholdsNewRoute: typeof AuthenticatedHouseholdsNewRoute
+  AuthenticatedPoliciesIdRoute: typeof AuthenticatedPoliciesIdRoute
+  AuthenticatedPoliciesNewRoute: typeof AuthenticatedPoliciesNewRoute
   AuthenticatedHouseholdsIndexRoute: typeof AuthenticatedHouseholdsIndexRoute
+  AuthenticatedPoliciesIndexRoute: typeof AuthenticatedPoliciesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHouseholdsIdRoute: AuthenticatedHouseholdsIdRoute,
   AuthenticatedHouseholdsNewRoute: AuthenticatedHouseholdsNewRoute,
+  AuthenticatedPoliciesIdRoute: AuthenticatedPoliciesIdRoute,
+  AuthenticatedPoliciesNewRoute: AuthenticatedPoliciesNewRoute,
   AuthenticatedHouseholdsIndexRoute: AuthenticatedHouseholdsIndexRoute,
+  AuthenticatedPoliciesIndexRoute: AuthenticatedPoliciesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
