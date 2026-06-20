@@ -58,10 +58,9 @@ export const encryptAndStorePII = createServerFn({ method: "POST" })
 
     // Use Supabase RPC-style update via the data API. Postgres accepts base64 in bytea via \x decoding -- easiest is hex.
     const hex = "\\x" + ct.toString("hex");
-    const { error } = await supabase
-      .from(table)
-      .update({ [encCol]: hex, [last4Col]: last4 })
-      .eq("id", data.recordId);
+    const update: Record<string, string> = { [encCol]: hex, [last4Col]: last4 };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from(table) as any).update(update).eq("id", data.recordId);
     if (error) throw new Error(error.message);
     void b64;
     return { ok: true, last4, accessor: userId };
