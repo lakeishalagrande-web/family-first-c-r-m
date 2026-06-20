@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHouseholdsIndexRouteImport } from './routes/_authenticated/households.index'
 import { Route as AuthenticatedHouseholdsNewRouteImport } from './routes/_authenticated/households.new'
+import { Route as AuthenticatedHouseholdsIdRouteImport } from './routes/_authenticated/households.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -53,12 +54,19 @@ const AuthenticatedHouseholdsNewRoute =
     path: '/households/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHouseholdsIdRoute =
+  AuthenticatedHouseholdsIdRouteImport.update({
+    id: '/households/$id',
+    path: '/households/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
   '/households/': typeof AuthenticatedHouseholdsIndexRoute
 }
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
   '/households': typeof AuthenticatedHouseholdsIndexRoute
 }
@@ -77,6 +86,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/_authenticated/households/new': typeof AuthenticatedHouseholdsNewRoute
   '/_authenticated/households/': typeof AuthenticatedHouseholdsIndexRoute
 }
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
+    | '/households/$id'
     | '/households/new'
     | '/households/'
   fileRoutesByTo: FileRoutesByTo
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
+    | '/households/$id'
     | '/households/new'
     | '/households'
   id:
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/households/$id'
     | '/_authenticated/households/new'
     | '/_authenticated/households/'
   fileRoutesById: FileRoutesById
@@ -166,17 +179,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHouseholdsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/households/$id': {
+      id: '/_authenticated/households/$id'
+      path: '/households/$id'
+      fullPath: '/households/$id'
+      preLoaderRoute: typeof AuthenticatedHouseholdsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHouseholdsIdRoute: typeof AuthenticatedHouseholdsIdRoute
   AuthenticatedHouseholdsNewRoute: typeof AuthenticatedHouseholdsNewRoute
   AuthenticatedHouseholdsIndexRoute: typeof AuthenticatedHouseholdsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHouseholdsIdRoute: AuthenticatedHouseholdsIdRoute,
   AuthenticatedHouseholdsNewRoute: AuthenticatedHouseholdsNewRoute,
   AuthenticatedHouseholdsIndexRoute: AuthenticatedHouseholdsIndexRoute,
 }
