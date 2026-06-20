@@ -2,9 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function assertAdmin(supabase: Awaited<ReturnType<typeof import("@supabase/supabase-js").createClient>>, userId: string) {
-  const { data, error } = await supabase.rpc("is_admin", { _user_id: userId });
-  if (error || !data) throw new Error("Forbidden: admin only");
+async function assertAdmin(context: { supabase: { from: (t: string) => { select: (s: string) => { eq: (c: string, v: string) => { eq: (c: string, v: string) => { maybeSingle: () => Promise<{ data: unknown }> } } } } }; userId: string }) {
+  const { data } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+  if (!data) throw new Error("Forbidden: admin only");
 }
 
 // List all agents (admin only). Joins profile + role + counts.
