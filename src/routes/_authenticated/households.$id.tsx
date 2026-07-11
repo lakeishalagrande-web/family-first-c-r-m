@@ -67,6 +67,11 @@ function HouseholdDetail() {
             </p>
           </div>
           <div className="flex gap-2">
+            <MemberDialog
+              householdId={id}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["household", id] })}
+              trigger={<Button size="sm" className="bg-gold text-gold-foreground hover:bg-gold/90"><UserPlus className="h-4 w-4 mr-1" /> Add Family Member</Button>}
+            />
             <Button variant="outline" size="sm" onClick={() => { void qc.invalidateQueries({ queryKey: ["household", id] }); }}>Refresh</Button>
             <Button variant="outline" size="sm" onClick={deleteHousehold} className="text-destructive"><Trash2 className="h-3 w-3 mr-1" /> Delete</Button>
           </div>
