@@ -300,7 +300,20 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
             <div><Label>Last *</Label><Input required value={f.last_name} onChange={(e) => setF({ ...f, last_name: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label>Relationship</Label><Input value={f.relationship} onChange={(e) => setF({ ...f, relationship: e.target.value })} placeholder="Self, Spouse, Child…" /></div>
+            <div>
+              <Label>Relationship</Label>
+              <Select value={f.relationship} onValueChange={(v) => setF({ ...f, relationship: v })}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Self">Self (Primary)</SelectItem>
+                  <SelectItem value="Spouse">Spouse</SelectItem>
+                  <SelectItem value="Child">Child</SelectItem>
+                  <SelectItem value="Parent">Parent</SelectItem>
+                  <SelectItem value="Sibling">Sibling</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>DOB</Label><Input type="date" value={f.date_of_birth} onChange={(e) => setF({ ...f, date_of_birth: e.target.value })} /></div>
             <div>
               <Label>Gender</Label>
