@@ -24,6 +24,7 @@ export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
 export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
+  pending: "Pending",
   extended_term: "Extended Term",
   reinstatement_eligible: "Reinstatement Eligible",
   surrendered: "Surrendered",
