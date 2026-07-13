@@ -34,6 +34,10 @@ function NewHousehold() {
     const { data, error } = await supabase.from("households").insert({
       agent_id: user.id,
       household_name: form.household_name,
+      primary_contact_first_name: form.primary_contact_first_name || null,
+      primary_contact_last_name: form.primary_contact_last_name || null,
+      primary_contact_phone: form.primary_contact_phone || null,
+      primary_contact_email: form.primary_contact_email || null,
       primary_street: form.primary_street || null,
       primary_city: form.primary_city || null,
       primary_state: form.primary_state || null,
