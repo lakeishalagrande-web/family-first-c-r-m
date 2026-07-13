@@ -17,7 +17,10 @@ function NewHousehold() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    household_name: "", primary_street: "", primary_city: "", primary_state: "", primary_zip: "",
+    household_name: "",
+    primary_contact_first_name: "", primary_contact_last_name: "",
+    primary_contact_phone: "", primary_contact_email: "",
+    primary_street: "", primary_city: "", primary_state: "", primary_zip: "",
     mailing_street: "", mailing_city: "", mailing_state: "", mailing_zip: "",
     household_income: "", agent_notes: "",
   });
