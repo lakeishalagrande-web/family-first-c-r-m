@@ -78,6 +78,16 @@ function NewHousehold() {
         </Card>
 
         <Card className="shadow-card">
+          <CardHeader><CardTitle className="font-display text-lg">Primary contact</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2"><Label>First name</Label><Input value={form.primary_contact_first_name} onChange={(e) => set("primary_contact_first_name", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Last name</Label><Input value={form.primary_contact_last_name} onChange={(e) => set("primary_contact_last_name", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input type="tel" value={form.primary_contact_phone} onChange={(e) => set("primary_contact_phone", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.primary_contact_email} onChange={(e) => set("primary_contact_email", e.target.value)} /></div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
           <CardHeader><CardTitle className="font-display text-lg">Primary address</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2"><Label>Street</Label><Input value={form.primary_street} onChange={(e) => set("primary_street", e.target.value)} /></div>
