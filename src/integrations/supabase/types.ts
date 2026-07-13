@@ -190,6 +190,56 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          agent_id: string
+          created_at: string
+          dob: string | null
+          email: string | null
+          first_name: string
+          household_id: string
+          id: string
+          last_name: string
+          phone: string | null
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string
+          created_at?: string
+          dob?: string | null
+          email?: string | null
+          first_name: string
+          household_id: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          dob?: string | null
+          email?: string | null
+          first_name?: string
+          household_id?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           agent_id: string
@@ -341,8 +391,11 @@ export type Database = {
       }
       households: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           agent_id: string
           agent_notes: string | null
+          city: string | null
           created_at: string
           household_income: number | null
           household_name: string
@@ -351,15 +404,24 @@ export type Database = {
           mailing_state: string | null
           mailing_street: string | null
           mailing_zip: string | null
+          postal_code: string | null
           primary_city: string | null
+          primary_contact_email: string | null
+          primary_contact_first_name: string | null
+          primary_contact_last_name: string | null
+          primary_contact_phone: string | null
           primary_state: string | null
           primary_street: string | null
           primary_zip: string | null
+          state: string | null
           updated_at: string
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           agent_id: string
           agent_notes?: string | null
+          city?: string | null
           created_at?: string
           household_income?: number | null
           household_name: string
@@ -368,15 +430,24 @@ export type Database = {
           mailing_state?: string | null
           mailing_street?: string | null
           mailing_zip?: string | null
+          postal_code?: string | null
           primary_city?: string | null
+          primary_contact_email?: string | null
+          primary_contact_first_name?: string | null
+          primary_contact_last_name?: string | null
+          primary_contact_phone?: string | null
           primary_state?: string | null
           primary_street?: string | null
           primary_zip?: string | null
+          state?: string | null
           updated_at?: string
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           agent_id?: string
           agent_notes?: string | null
+          city?: string | null
           created_at?: string
           household_income?: number | null
           household_name?: string
@@ -385,10 +456,16 @@ export type Database = {
           mailing_state?: string | null
           mailing_street?: string | null
           mailing_zip?: string | null
+          postal_code?: string | null
           primary_city?: string | null
+          primary_contact_email?: string | null
+          primary_contact_first_name?: string | null
+          primary_contact_last_name?: string | null
+          primary_contact_phone?: string | null
           primary_state?: string | null
           primary_street?: string | null
           primary_zip?: string | null
+          state?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -431,7 +508,9 @@ export type Database = {
           carrier: string | null
           cash_value: number | null
           cash_value_checked_on: string | null
+          contact_id: string | null
           created_at: string
+          effective_date: string | null
           existing_coverage: boolean | null
           face_amount: number | null
           has_policy_loan: boolean | null
@@ -448,6 +527,7 @@ export type Database = {
             | null
           policy_loan_amount: number | null
           policy_number: string | null
+          policy_type: string | null
           product_type: Database["public"]["Enums"]["product_type"] | null
           rate_class: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline: string | null
@@ -461,7 +541,9 @@ export type Database = {
           carrier?: string | null
           cash_value?: number | null
           cash_value_checked_on?: string | null
+          contact_id?: string | null
           created_at?: string
+          effective_date?: string | null
           existing_coverage?: boolean | null
           face_amount?: number | null
           has_policy_loan?: boolean | null
@@ -478,6 +560,7 @@ export type Database = {
             | null
           policy_loan_amount?: number | null
           policy_number?: string | null
+          policy_type?: string | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
@@ -491,7 +574,9 @@ export type Database = {
           carrier?: string | null
           cash_value?: number | null
           cash_value_checked_on?: string | null
+          contact_id?: string | null
           created_at?: string
+          effective_date?: string | null
           existing_coverage?: boolean | null
           face_amount?: number | null
           has_policy_loan?: boolean | null
@@ -508,6 +593,7 @@ export type Database = {
             | null
           policy_loan_amount?: number | null
           policy_number?: string | null
+          policy_type?: string | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
@@ -515,6 +601,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "policies_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "policies_household_id_fkey"
             columns: ["household_id"]
