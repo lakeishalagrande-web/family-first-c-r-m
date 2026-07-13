@@ -17,7 +17,10 @@ function NewHousehold() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    household_name: "", primary_street: "", primary_city: "", primary_state: "", primary_zip: "",
+    household_name: "",
+    primary_contact_first_name: "", primary_contact_last_name: "",
+    primary_contact_phone: "", primary_contact_email: "",
+    primary_street: "", primary_city: "", primary_state: "", primary_zip: "",
     mailing_street: "", mailing_city: "", mailing_state: "", mailing_zip: "",
     household_income: "", agent_notes: "",
   });
@@ -31,6 +34,10 @@ function NewHousehold() {
     const { data, error } = await supabase.from("households").insert({
       agent_id: user.id,
       household_name: form.household_name,
+      primary_contact_first_name: form.primary_contact_first_name || null,
+      primary_contact_last_name: form.primary_contact_last_name || null,
+      primary_contact_phone: form.primary_contact_phone || null,
+      primary_contact_email: form.primary_contact_email || null,
       primary_street: form.primary_street || null,
       primary_city: form.primary_city || null,
       primary_state: form.primary_state || null,
@@ -67,6 +74,16 @@ function NewHousehold() {
               <Label>Household income</Label>
               <Input type="number" value={form.household_income} onChange={(e) => set("household_income", e.target.value)} placeholder="Annual" />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader><CardTitle className="font-display text-lg">Primary contact</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2"><Label>First name</Label><Input value={form.primary_contact_first_name} onChange={(e) => set("primary_contact_first_name", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Last name</Label><Input value={form.primary_contact_last_name} onChange={(e) => set("primary_contact_last_name", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input type="tel" value={form.primary_contact_phone} onChange={(e) => set("primary_contact_phone", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.primary_contact_email} onChange={(e) => set("primary_contact_email", e.target.value)} /></div>
           </CardContent>
         </Card>
 
