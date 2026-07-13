@@ -1,0 +1,32 @@
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.households TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contacts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.policies TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.family_members TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.beneficiaries TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.term_riders TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.follow_ups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.alerts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.quote_scenarios TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.agent_writing_numbers TO authenticated;
+GRANT SELECT ON public.carriers TO authenticated;
+GRANT SELECT ON public.announcements TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT ON public.user_roles TO authenticated;
+GRANT SELECT, INSERT ON public.pii_access_log TO authenticated;
+
+GRANT ALL ON public.households TO service_role;
+GRANT ALL ON public.contacts TO service_role;
+GRANT ALL ON public.policies TO service_role;
+GRANT ALL ON public.family_members TO service_role;
+GRANT ALL ON public.beneficiaries TO service_role;
+GRANT ALL ON public.term_riders TO service_role;
+GRANT ALL ON public.follow_ups TO service_role;
+GRANT ALL ON public.alerts TO service_role;
+GRANT ALL ON public.quote_scenarios TO service_role;
+GRANT ALL ON public.agent_writing_numbers TO service_role;
+GRANT ALL ON public.carriers TO service_role;
+GRANT ALL ON public.announcements TO service_role;
+GRANT ALL ON public.profiles TO service_role;
+GRANT ALL ON public.user_roles TO service_role;
+GRANT ALL ON public.pii_access_log TO service_role;
