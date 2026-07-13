@@ -751,6 +751,7 @@ export type Database = {
         | "reinstatement_eligible"
         | "surrendered"
         | "paid_up"
+        | "pending"
       product_type:
         | "term"
         | "whole_life"
@@ -927,6 +928,7 @@ export const Constants = {
         "reinstatement_eligible",
         "surrendered",
         "paid_up",
+        "pending",
       ],
       product_type: [
         "term",
