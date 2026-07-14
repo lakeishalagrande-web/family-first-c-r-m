@@ -213,7 +213,7 @@ function MemberCard({ member, onChange, householdId }: { member: ReturnType<type
 }
 
 // ---------- Member Dialog ----------
-function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: string; member?: { id: string } & Record<string, unknown>; onSaved: () => void; trigger?: React.ReactNode }) {
+export function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: string; member?: { id: string } & Record<string, unknown>; onSaved: () => void; trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const encryptFn = useServerFn(encryptAndStorePII);
 
