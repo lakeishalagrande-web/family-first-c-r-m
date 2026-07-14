@@ -327,6 +327,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Cash value</Label><Input type="number" step="0.01" value={f.cash_value} onChange={(e) => setF({ ...f, cash_value: e.target.value })} /></div>
+            <div><Label>Loan balance</Label><Input type="number" step="0.01" value={f.loan_balance} onChange={(e) => setF({ ...f, loan_balance: e.target.value })} /></div>
+            <div><Label>Annual review date</Label><Input type="date" value={f.annual_review_date} onChange={(e) => setF({ ...f, annual_review_date: e.target.value })} /></div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
