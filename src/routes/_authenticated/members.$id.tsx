@@ -17,7 +17,10 @@ import {
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
   BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
+import { formatPhone } from "@/components/phone-input";
+import { formatHeight } from "@/components/height-input";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type PolicyStatus = Database["public"]["Enums"]["policy_status"];
 type BeneficiaryType = Database["public"]["Enums"]["beneficiary_type"];
@@ -68,14 +71,23 @@ function MemberDetail() {
               {member.relationship || "—"}
               {member.date_of_birth && ` · DOB ${fmtDate(member.date_of_birth)}`}
               {member.email && ` · ${member.email}`}
-              {member.phone_mobile && ` · ${member.phone_mobile}`}
+              {member.phone_mobile && ` · ${formatPhone(member.phone_mobile)}`}
+              {member.height_inches != null && ` · ${formatHeight(Number(member.height_inches))}`}
             </p>
+            {policies.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {Array.from(new Set(policies.map((p) => p.policy_type).filter(Boolean) as string[])).map((t) => (
+                  <Badge key={t} variant="secondary">{t} ✓</Badge>
+                ))}
+              </div>
+            )}
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
             View household
           </Button>
         </div>
       </div>
+
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
