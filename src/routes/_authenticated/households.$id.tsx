@@ -364,6 +364,34 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
             <label className="flex items-center gap-2"><input type="checkbox" checked={f.has_disability} onChange={(e) => setF({ ...f, has_disability: e.target.checked })} /> Disability/special needs</label>
           </div>
           {f.has_disability && <Textarea rows={2} value={f.disability_notes} onChange={(e) => setF({ ...f, disability_notes: e.target.value })} placeholder="Disability notes…" />}
+
+          <div className="rounded-md border p-3 space-y-3">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Health & medical</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Doctor name</Label><Input value={f.doctor_name} onChange={(e) => setF({ ...f, doctor_name: e.target.value })} /></div>
+              <div><Label>Doctor phone</Label><Input value={f.doctor_phone} onChange={(e) => setF({ ...f, doctor_phone: e.target.value })} /></div>
+              <div><Label>Last visit</Label><Input type="date" value={f.last_doctor_visit} onChange={(e) => setF({ ...f, last_doctor_visit: e.target.value })} /></div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Medications</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setMeds([...meds, { name: "", dosage: "" }])}>
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </div>
+              {meds.length === 0 && <p className="text-xs text-muted-foreground">No medications recorded.</p>}
+              <div className="space-y-2">
+                {meds.map((m, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <Input placeholder="Medication name" value={m.name} onChange={(e) => { const c = [...meds]; c[i] = { ...c[i], name: e.target.value }; setMeds(c); }} />
+                    <Input placeholder="Dosage" value={m.dosage ?? ""} onChange={(e) => { const c = [...meds]; c[i] = { ...c[i], dosage: e.target.value }; setMeds(c); }} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setMeds(meds.filter((_, j) => j !== i))}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
