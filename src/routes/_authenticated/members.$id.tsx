@@ -156,6 +156,9 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <p className="text-xs text-muted-foreground mt-1">
             #{policy.policy_number || "—"} · Effective {fmtDate(policy.effective_date)} · Face {fmtCurrency(Number(policy.face_amount))}
             {policy.monthly_premium != null && ` · ${fmtCurrency(Number(policy.monthly_premium))} ${policy.premium_frequency ? PREMIUM_FREQUENCY_LABEL[policy.premium_frequency as "monthly" | "quarterly" | "annual"] : ""}`}
+            {policy.cash_value != null && ` · Cash value ${fmtCurrency(Number(policy.cash_value))}`}
+            {policy.loan_balance != null && Number(policy.loan_balance) > 0 && ` · Loan ${fmtCurrency(Number(policy.loan_balance))}`}
+            {policy.annual_review_date && ` · Annual review ${fmtDate(policy.annual_review_date)}`}
           </p>
         </div>
         <div className="flex gap-1 flex-wrap">
