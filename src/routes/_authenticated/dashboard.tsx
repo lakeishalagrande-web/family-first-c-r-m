@@ -70,6 +70,12 @@ function Dashboard() {
         <StatCard icon={PhoneCall} label="Follow-ups today" value={stats?.followUpsToday ?? "—"} tint="gold" />
       </div>
 
+      <UrgentAlertsCard />
+
+      <AnnualReviewsCard />
+
+
+
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 shadow-card">
           <CardHeader className="flex flex-row items-center justify-between">
