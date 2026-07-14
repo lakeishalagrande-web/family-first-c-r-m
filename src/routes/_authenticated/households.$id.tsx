@@ -252,6 +252,7 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const cleanedMeds = meds.filter((m) => m.name && m.name.trim());
     const payload = {
       agent_id: user.id,
       household_id: householdId,
@@ -270,6 +271,10 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
       disability_notes: f.disability_notes || null,
       smoker: f.smoker,
       is_primary: f.is_primary,
+      doctor_name: f.doctor_name || null,
+      doctor_phone: f.doctor_phone || null,
+      last_doctor_visit: f.last_doctor_visit || null,
+      medications: cleanedMeds,
     };
 
     let recordId = member?.id;
