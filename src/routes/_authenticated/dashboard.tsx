@@ -1,14 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, FileText, AlertTriangle, PhoneCall, Plus, ArrowRight, Bell } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, FileText, AlertTriangle, PhoneCall, Plus, Bell, ChevronDown, ChevronRight, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { regenerateAlerts } from "@/lib/alerts.functions";
-import { fmtDate, daysUntil, ALERT_TYPE_LABEL } from "@/lib/labels";
+import { fmtDate, daysUntil, calcAge, ALERT_TYPE_LABEL, DISMISS_REASON_OPTIONS } from "@/lib/labels";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — AgentLifeline" }] }),
@@ -47,6 +49,7 @@ function Dashboard() {
       };
     },
   });
+
 
   return (
     <div className="space-y-6 max-w-7xl">
