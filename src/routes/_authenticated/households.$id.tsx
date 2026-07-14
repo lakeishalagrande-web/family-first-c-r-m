@@ -218,6 +218,7 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
   const encryptFn = useServerFn(encryptAndStorePII);
 
   const initial = member ?? {};
+  const initialMeds = ((initial as { medications?: Array<{ name: string; dosage?: string }> }).medications ?? []) as Array<{ name: string; dosage?: string }>;
   const [f, setF] = useState({
     first_name: (initial as { first_name?: string }).first_name ?? "",
     middle_name: (initial as { middle_name?: string }).middle_name ?? "",
@@ -236,9 +237,13 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
     disability_notes: (initial as { disability_notes?: string }).disability_notes ?? "",
     smoker: !!(initial as { smoker?: boolean }).smoker,
     is_primary: !!(initial as { is_primary?: boolean }).is_primary,
+    doctor_name: (initial as { doctor_name?: string }).doctor_name ?? "",
+    doctor_phone: (initial as { doctor_phone?: string }).doctor_phone ?? "",
+    last_doctor_visit: (initial as { last_doctor_visit?: string }).last_doctor_visit ?? "",
     ssn: "",
     medicare: "",
   });
+  const [meds, setMeds] = useState<Array<{ name: string; dosage?: string }>>(initialMeds);
   const [saving, setSaving] = useState(false);
 
   async function save(e: React.FormEvent) {
@@ -247,6 +252,7 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const cleanedMeds = meds.filter((m) => m.name && m.name.trim());
     const payload = {
       agent_id: user.id,
       household_id: householdId,
@@ -265,6 +271,10 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
       disability_notes: f.disability_notes || null,
       smoker: f.smoker,
       is_primary: f.is_primary,
+      doctor_name: f.doctor_name || null,
+      doctor_phone: f.doctor_phone || null,
+      last_doctor_visit: f.last_doctor_visit || null,
+      medications: cleanedMeds,
     };
 
     let recordId = member?.id;
@@ -354,6 +364,34 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
             <label className="flex items-center gap-2"><input type="checkbox" checked={f.has_disability} onChange={(e) => setF({ ...f, has_disability: e.target.checked })} /> Disability/special needs</label>
           </div>
           {f.has_disability && <Textarea rows={2} value={f.disability_notes} onChange={(e) => setF({ ...f, disability_notes: e.target.value })} placeholder="Disability notes…" />}
+
+          <div className="rounded-md border p-3 space-y-3">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Health & medical</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Doctor name</Label><Input value={f.doctor_name} onChange={(e) => setF({ ...f, doctor_name: e.target.value })} /></div>
+              <div><Label>Doctor phone</Label><Input value={f.doctor_phone} onChange={(e) => setF({ ...f, doctor_phone: e.target.value })} /></div>
+              <div><Label>Last visit</Label><Input type="date" value={f.last_doctor_visit} onChange={(e) => setF({ ...f, last_doctor_visit: e.target.value })} /></div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Medications</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setMeds([...meds, { name: "", dosage: "" }])}>
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </div>
+              {meds.length === 0 && <p className="text-xs text-muted-foreground">No medications recorded.</p>}
+              <div className="space-y-2">
+                {meds.map((m, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <Input placeholder="Medication name" value={m.name} onChange={(e) => { const c = [...meds]; c[i] = { ...c[i], name: e.target.value }; setMeds(c); }} />
+                    <Input placeholder="Dosage" value={m.dosage ?? ""} onChange={(e) => { const c = [...meds]; c[i] = { ...c[i], dosage: e.target.value }; setMeds(c); }} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setMeds(meds.filter((_, j) => j !== i))}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
@@ -378,6 +416,7 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
     mailing_state: (get("mailing_state") as string) ?? "",
     mailing_zip: (get("mailing_zip") as string) ?? "",
     household_income: String(get("household_income") ?? ""),
+    annual_review_date: (get("annual_review_date") as string) ?? "",
     agent_notes: (get("agent_notes") as string) ?? "",
   });
   const [saving, setSaving] = useState(false);
@@ -392,6 +431,7 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
       mailing_street: f.mailing_street || null, mailing_city: f.mailing_city || null,
       mailing_state: f.mailing_state || null, mailing_zip: f.mailing_zip || null,
       household_income: f.household_income ? Number(f.household_income) : null,
+      annual_review_date: f.annual_review_date || null,
       agent_notes: f.agent_notes || null,
     }).eq("id", hh.id);
     setSaving(false);
@@ -415,7 +455,10 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
             <div><Label>City</Label><Input value={f.mailing_city} onChange={(e) => setF({ ...f, mailing_city: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-2"><div><Label>St</Label><Input value={f.mailing_state} onChange={(e) => setF({ ...f, mailing_state: e.target.value.toUpperCase() })} /></div><div><Label>Zip</Label><Input value={f.mailing_zip} onChange={(e) => setF({ ...f, mailing_zip: e.target.value })} /></div></div>
           </div>
-          <div><Label>Household income</Label><Input type="number" value={f.household_income} onChange={(e) => setF({ ...f, household_income: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Household income</Label><Input type="number" value={f.household_income} onChange={(e) => setF({ ...f, household_income: e.target.value })} /></div>
+            <div><Label>Annual review date</Label><Input type="date" value={f.annual_review_date} onChange={(e) => setF({ ...f, annual_review_date: e.target.value })} /></div>
+          </div>
           <div><Label>Agent notes</Label><Textarea rows={4} value={f.agent_notes} onChange={(e) => setF({ ...f, agent_notes: e.target.value })} /></div>
           <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
         </form>
@@ -425,62 +468,128 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
 }
 
 // ---------- Quotes Panel ----------
-function QuotesPanel({ householdId, quotes, onChange }: { householdId: string; quotes: Array<Record<string, unknown> & { id: string; slot: number }>; onChange: () => void }) {
+function QuotesPanel({ householdId, quotes, onChange }: { householdId: string; quotes: Array<Record<string, unknown> & { id: string }>; onChange: () => void }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {[1, 2].map((slot) => {
-        const q = quotes.find((qq) => qq.slot === slot);
-        return <QuoteCard key={slot} householdId={householdId} slot={slot} quote={q} onChange={onChange} />;
-      })}
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <QuoteDialog householdId={householdId} onSaved={onChange}
+          trigger={<Button size="sm" className="bg-gold text-gold-foreground hover:bg-gold/90"><Plus className="h-4 w-4 mr-1" /> Add quote</Button>} />
+      </div>
+      {quotes.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No quotes yet.</CardContent></Card>}
+      <div className="space-y-2">
+        {quotes.map((q) => {
+          const carrier = q.carrier as string | null;
+          const label = q.label as string | null;
+          const face = q.face_amount as number | null;
+          const prem = q.monthly_premium as number | null;
+          const status = (q.status as string) ?? "Quoted";
+          const quoted = q.quoted_date as string | null;
+          return (
+            <Card key={q.id} className="shadow-card">
+              <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium">{carrier || "—"}{label && ` · ${label}`}</p>
+                    <Badge variant={status === "Accepted" ? "default" : status === "Declined" ? "destructive" : "secondary"}>{status}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Face {fmtCurrency(Number(face))} · Premium {fmtCurrency(Number(prem))}
+                    {quoted && ` · Quoted ${fmtDate(quoted)}`}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <QuoteDialog householdId={householdId} quote={q} onSaved={onChange}
+                    trigger={<Button variant="ghost" size="icon"><Edit2 className="h-3 w-3" /></Button>} />
+                  <Button variant="ghost" size="icon" onClick={async () => {
+                    if (!confirm("Delete quote?")) return;
+                    const { error } = await supabase.from("quote_scenarios").delete().eq("id", q.id);
+                    if (error) return toast.error(error.message);
+                    onChange();
+                  }}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function QuoteCard({ householdId, slot, quote, onChange }: { householdId: string; slot: number; quote?: Record<string, unknown> & { id: string }; onChange: () => void }) {
+function QuoteDialog({ householdId, quote, onSaved, trigger }: { householdId: string; quote?: Record<string, unknown> & { id: string }; onSaved: () => void; trigger: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   const get = (k: string) => quote ? (quote as Record<string, unknown>)[k] : null;
   const [f, setF] = useState({
     label: (get("label") as string) ?? "",
     carrier: (get("carrier") as string) ?? "",
     face_amount: String(get("face_amount") ?? ""),
     monthly_premium: String(get("monthly_premium") ?? ""),
+    quoted_date: (get("quoted_date") as string) ?? new Date().toISOString().slice(0, 10),
+    status: (get("status") as string) ?? "Quoted",
     notes: (get("notes") as string) ?? "",
   });
   const [saving, setSaving] = useState(false);
 
-  async function save() {
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
     const payload = {
-      agent_id: user.id, household_id: householdId, slot,
+      agent_id: user.id, household_id: householdId,
       label: f.label || null, carrier: f.carrier || null,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
+      quoted_date: f.quoted_date || null,
+      status: f.status,
       notes: f.notes || null,
     };
-    if (quote) {
-      await supabase.from("quote_scenarios").update(payload).eq("id", quote.id);
-    } else {
-      await supabase.from("quote_scenarios").insert(payload);
-    }
+    const { error } = quote
+      ? await supabase.from("quote_scenarios").update(payload).eq("id", quote.id)
+      : await supabase.from("quote_scenarios").insert({ ...payload, slot: Math.floor(Math.random() * 100000) });
     setSaving(false);
+    if (error) return toast.error(error.message);
     toast.success("Saved");
-    onChange();
+    setOpen(false);
+    onSaved();
   }
 
   return (
-    <Card className="shadow-card">
-      <CardHeader><CardTitle className="font-display text-lg">Scenario {slot}</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        <div><Label>Label</Label><Input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="e.g. 20-yr term" /></div>
-        <div><Label>Carrier</Label><Input value={f.carrier} onChange={(e) => setF({ ...f, carrier: e.target.value })} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Face amount</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
-          <div><Label>Monthly premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
-        </div>
-        <div><Label>Notes</Label><Textarea rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
-        <Button onClick={save} disabled={saving} className="w-full">{saving ? "Saving…" : "Save scenario"}</Button>
-      </CardContent>
-    </Card>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle className="font-display">{quote ? "Edit" : "Add"} quote</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Carrier</Label><Input value={f.carrier} onChange={(e) => setF({ ...f, carrier: e.target.value })} /></div>
+            <div><Label>Policy type / label</Label><Input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="e.g. 20-yr term" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Face amount</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
+            <div><Label>Premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Date quoted</Label><Input type="date" value={f.quoted_date} onChange={(e) => setF({ ...f, quoted_date: e.target.value })} /></div>
+            <div>
+              <Label>Status</Label>
+              <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Quoted">Quoted</SelectItem>
+                  <SelectItem value="Presented">Presented</SelectItem>
+                  <SelectItem value="Accepted">Accepted</SelectItem>
+                  <SelectItem value="Declined">Declined</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div><Label>Notes</Label><Textarea rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

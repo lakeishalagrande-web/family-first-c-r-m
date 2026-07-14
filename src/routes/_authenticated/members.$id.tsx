@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
+  BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -48,6 +49,7 @@ function MemberDetail() {
   const { member, policies, carriers } = data;
   const age = calcAge(member.date_of_birth);
   const refresh = () => qc.invalidateQueries({ queryKey: ["member", id] });
+  const meds = (member.medications as Array<{ name: string; dosage?: string }> | null) ?? [];
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -73,6 +75,22 @@ function MemberDetail() {
           </Button>
         </div>
       </div>
+
+      <Card className="shadow-card">
+        <CardHeader><CardTitle className="font-display text-lg">Health & medical</CardTitle></CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
+          <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${member.doctor_phone}`}</p>
+          <p><span className="text-muted-foreground">Last visit:</span> {fmtDate(member.last_doctor_visit)}</p>
+          <div className="sm:col-span-2">
+            <p className="text-muted-foreground mb-1">Medications:</p>
+            {meds.length === 0 ? <p className="text-xs text-muted-foreground">None recorded.</p> : (
+              <ul className="list-disc pl-5 space-y-0.5">
+                {meds.map((m, i) => <li key={i}>{m.name}{m.dosage ? ` — ${m.dosage}` : ""}</li>)}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -138,6 +156,9 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <p className="text-xs text-muted-foreground mt-1">
             #{policy.policy_number || "—"} · Effective {fmtDate(policy.effective_date)} · Face {fmtCurrency(Number(policy.face_amount))}
             {policy.monthly_premium != null && ` · ${fmtCurrency(Number(policy.monthly_premium))} ${policy.premium_frequency ? PREMIUM_FREQUENCY_LABEL[policy.premium_frequency as "monthly" | "quarterly" | "annual"] : ""}`}
+            {policy.cash_value != null && ` · Cash value ${fmtCurrency(Number(policy.cash_value))}`}
+            {policy.loan_balance != null && Number(policy.loan_balance) > 0 && ` · Loan ${fmtCurrency(Number(policy.loan_balance))}`}
+            {policy.annual_review_date && ` · Annual review ${fmtDate(policy.annual_review_date)}`}
           </p>
         </div>
         <div className="flex gap-1 flex-wrap">
@@ -210,6 +231,9 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
     face_amount: policy?.face_amount != null ? String(policy.face_amount) : "",
     monthly_premium: policy?.monthly_premium != null ? String(policy.monthly_premium) : "",
     premium_frequency: (policy?.premium_frequency ?? "monthly") as "monthly" | "quarterly" | "annual",
+    cash_value: policy?.cash_value != null ? String(policy.cash_value) : "",
+    loan_balance: policy?.loan_balance != null ? String(policy.loan_balance) : "",
+    annual_review_date: policy?.annual_review_date ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -230,6 +254,9 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
       face_amount: f.face_amount ? Number(f.face_amount) : null,
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
       premium_frequency: f.premium_frequency,
+      cash_value: f.cash_value ? Number(f.cash_value) : null,
+      loan_balance: f.loan_balance ? Number(f.loan_balance) : null,
+      annual_review_date: f.annual_review_date || null,
     };
     const { error } = policy
       ? await supabase.from("policies").update(payload).eq("id", policy.id)
@@ -300,6 +327,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Cash value</Label><Input type="number" step="0.01" value={f.cash_value} onChange={(e) => setF({ ...f, cash_value: e.target.value })} /></div>
+            <div><Label>Loan balance</Label><Input type="number" step="0.01" value={f.loan_balance} onChange={(e) => setF({ ...f, loan_balance: e.target.value })} /></div>
+            <div><Label>Annual review date</Label><Input type="date" value={f.annual_review_date} onChange={(e) => setF({ ...f, annual_review_date: e.target.value })} /></div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
@@ -356,7 +388,15 @@ function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
         <form onSubmit={save} className="space-y-3">
           <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Relationship</Label><Input value={f.relationship} onChange={(e) => setF({ ...f, relationship: e.target.value })} placeholder="e.g. Spouse" /></div>
+            <div>
+              <Label>Relationship</Label>
+              <Select value={f.relationship} onValueChange={(v) => setF({ ...f, relationship: v })}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent>
+                  {BENEFICIARY_RELATIONSHIP_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>Percentage</Label><Input type="number" min="0" max="100" step="0.01" value={f.percentage} onChange={(e) => setF({ ...f, percentage: e.target.value })} /></div>
           </div>
           <div>

@@ -41,6 +41,18 @@ export const PREMIUM_FREQUENCY_LABEL: Record<"monthly" | "quarterly" | "annual",
 export const POLICY_TYPE_OPTIONS = [
   "Life", "Health", "Auto", "Home", "Renters", "Annuity", "Long-Term Care", "Disability", "Other",
 ] as const;
+
+export const BENEFICIARY_RELATIONSHIP_OPTIONS = [
+  "Spouse", "Child", "Mother", "Father", "Grandmother", "Grandfather", "Sibling", "Trust", "Other",
+] as const;
+
+export const QUOTE_STATUS_OPTIONS = ["Quoted", "Presented", "Accepted", "Declined"] as const;
+export type QuoteStatus = (typeof QUOTE_STATUS_OPTIONS)[number];
+
+export const DISMISS_REASON_OPTIONS = [
+  "Not interested", "Follow up later", "Has coverage elsewhere",
+] as const;
+
 export const PAYMENT_STRUCTURE_LABEL: Record<Enums["payment_structure"], string> = {
   ten_pay: "10-Pay",
   twenty_pay: "20-Pay",

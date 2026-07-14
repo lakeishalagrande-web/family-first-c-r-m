@@ -1,14 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, FileText, AlertTriangle, PhoneCall, Plus, ArrowRight, Bell } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, FileText, AlertTriangle, PhoneCall, Plus, Bell, ChevronDown, ChevronRight, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { regenerateAlerts } from "@/lib/alerts.functions";
-import { fmtDate, daysUntil, ALERT_TYPE_LABEL } from "@/lib/labels";
+import { fmtDate, daysUntil, calcAge, ALERT_TYPE_LABEL, DISMISS_REASON_OPTIONS } from "@/lib/labels";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — AgentLifeline" }] }),
@@ -48,6 +50,7 @@ function Dashboard() {
     },
   });
 
+
   return (
     <div className="space-y-6 max-w-7xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -66,6 +69,12 @@ function Dashboard() {
         <StatCard icon={AlertTriangle} label="Reinstatement (7d)" value={stats?.reinst ?? "—"} tint="destructive" />
         <StatCard icon={PhoneCall} label="Follow-ups today" value={stats?.followUpsToday ?? "—"} tint="gold" />
       </div>
+
+      <UrgentAlertsCard />
+
+      <AnnualReviewsCard />
+
+
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 shadow-card">
@@ -159,3 +168,142 @@ function StatCard({ icon: Icon, label, value, tint }: { icon: React.ComponentTyp
     </Card>
   );
 }
+
+// ---------- Urgent Alerts (collapsed category counts) ----------
+type DismissedMap = Record<string, string[]>;
+const DISMISS_KEY = "dashboard-dismissed-v1";
+function loadDismissed(): DismissedMap {
+  try { return JSON.parse(localStorage.getItem(DISMISS_KEY) || "{}"); } catch { return {}; }
+}
+function saveDismissed(m: DismissedMap) { localStorage.setItem(DISMISS_KEY, JSON.stringify(m)); }
+
+function UrgentAlertsCard() {
+  const [dismissed, setDismissed] = useState<DismissedMap>(() => (typeof window !== "undefined" ? loadDismissed() : {}));
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const { data } = useQuery({
+    queryKey: ["urgent-alerts"],
+    queryFn: async () => {
+      const today = new Date();
+      const in6mo = new Date(today); in6mo.setMonth(in6mo.getMonth() + 6);
+      const [{ data: members }, { data: policies }, { data: hhs }] = await Promise.all([
+        supabase.from("family_members").select("id, first_name, last_name, date_of_birth, household_id"),
+        supabase.from("policies").select("id, carrier, policy_number, status, household_id, insured_member_id"),
+        supabase.from("households").select("id, household_name"),
+      ]);
+      const m = members ?? []; const p = policies ?? []; const h = hhs ?? [];
+
+      const turning65 = m.filter((mem) => {
+        if (!mem.date_of_birth) return false;
+        const dob = new Date(mem.date_of_birth);
+        const at65 = new Date(dob.getFullYear() + 65, dob.getMonth(), dob.getDate());
+        return at65 >= today && at65 <= in6mo;
+      });
+
+      const lapsed = p.filter((pol) => pol.status === "lapsed");
+
+      const activeByMember = new Set(p.filter((pol) => pol.status === "active" && pol.insured_member_id).map((pol) => pol.insured_member_id));
+      const uninsured = m.filter((mem) => !activeByMember.has(mem.id));
+
+      const hhMap = new Map(h.map((x) => [x.id, x.household_name]));
+      return {
+        turning65: turning65.map((x) => ({ id: x.id, label: `${x.first_name} ${x.last_name} (age ${calcAge(x.date_of_birth)})`, householdId: x.household_id })),
+        lapsed: lapsed.map((x) => ({ id: x.id, label: `${x.carrier || "—"} #${x.policy_number || "—"} · ${hhMap.get(x.household_id) || ""}`, householdId: x.household_id })),
+        uninsured: uninsured.map((x) => ({ id: x.id, label: `${x.first_name} ${x.last_name} · ${hhMap.get(x.household_id) || ""}`, householdId: x.household_id })),
+      };
+    },
+  });
+
+  function dismiss(cat: string, id: string, reason: string) {
+    const next = { ...dismissed, [cat]: [...(dismissed[cat] ?? []), id] };
+    setDismissed(next); saveDismissed(next);
+    toast.success(`Dismissed: ${reason}`);
+  }
+  const visible = (cat: string, list: Array<{ id: string; label: string; householdId: string }>) =>
+    list.filter((x) => !(dismissed[cat] ?? []).includes(x.id));
+
+  const cats: Array<{ key: string; label: string; list: Array<{ id: string; label: string; householdId: string }> }> = [
+    { key: "turning65", label: "Members turning 65 within 6 months", list: visible("turning65", data?.turning65 ?? []) },
+    { key: "lapsed", label: "Lapsed policies", list: visible("lapsed", data?.lapsed ?? []) },
+    { key: "uninsured", label: "Uninsured family members", list: visible("uninsured", data?.uninsured ?? []) },
+  ];
+
+  return (
+    <Card className="shadow-card border-destructive/30">
+      <CardHeader>
+        <CardTitle className="font-display flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Urgent Alerts</CardTitle>
+        <CardDescription>Click a row to expand. Dismiss with a reason.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {cats.map((c) => {
+          const isOpen = expanded === c.key;
+          return (
+            <div key={c.key} className="border rounded-md">
+              <button type="button" onClick={() => setExpanded(isOpen ? null : c.key)} className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/40">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {c.label}
+                </span>
+                <Badge variant={c.list.length > 0 ? "destructive" : "secondary"}>{c.list.length}</Badge>
+              </button>
+              {isOpen && (
+                <div className="px-3 py-2 border-t space-y-1">
+                  {c.list.length === 0 && <p className="text-xs text-muted-foreground">None.</p>}
+                  {c.list.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2 text-sm py-1">
+                      <Link to="/households/$id" params={{ id: item.householdId }} className="hover:underline truncate">{item.label}</Link>
+                      <Select onValueChange={(v) => dismiss(c.key, item.id, v)}>
+                        <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Dismiss…" /></SelectTrigger>
+                        <SelectContent>
+                          {DISMISS_REASON_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------- Annual review reminders ----------
+function AnnualReviewsCard() {
+  const { data } = useQuery({
+    queryKey: ["annual-reviews"],
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      const { data: hhs } = await supabase.from("households")
+        .select("id, household_name, annual_review_date")
+        .not("annual_review_date", "is", null)
+        .gte("annual_review_date", today)
+        .lte("annual_review_date", in30)
+        .order("annual_review_date");
+      return hhs ?? [];
+    },
+  });
+  if (!data || data.length === 0) return null;
+  return (
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle className="font-display flex items-center gap-2"><CalendarClock className="h-4 w-4 text-primary" /> Annual reviews due (30d)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {data.map((h) => {
+          const d = daysUntil(h.annual_review_date);
+          return (
+            <Link key={h.id} to="/households/$id" params={{ id: h.id }} className="flex items-center justify-between border rounded-md p-2 hover:bg-muted/40">
+              <span className="text-sm font-medium">{h.household_name}</span>
+              <span className="text-xs text-muted-foreground">{fmtDate(h.annual_review_date)} · {d == null ? "" : `${d}d`}</span>
+            </Link>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
