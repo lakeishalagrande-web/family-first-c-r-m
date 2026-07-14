@@ -15,15 +15,28 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
 });
 
+function getEnvLabel(origin: string) {
+  if (origin.includes("localhost")) return { label: "Local", variant: "dev" as const };
+  if (origin.includes("id-preview--") || origin.includes("-dev.lovable.app")) return { label: "Preview", variant: "preview" as const };
+  return { label: "Production", variant: "prod" as const };
+}
+
 function AuthedLayout() {
   const { data, isLoading } = useCurrentUser();
   const navigate = useNavigate();
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && data?.profile?.account_status === "suspended") {
       supabase.auth.signOut().then(() => navigate({ to: "/auth", replace: true }));
     }
   }, [isLoading, data, navigate]);
+
+  const env = getEnvLabel(origin);
 
   if (isLoading || !data) {
     return (
