@@ -49,9 +49,25 @@ function NewHousehold() {
       household_income: form.household_income ? Number(form.household_income) : null,
       agent_notes: form.agent_notes || null,
     }).select().single();
+    if (error) { setLoading(false); return toast.error(error.message); }
+
+    // Also create a family_members row for the head of household so the primary
+    // contact has a real, clickable member profile with policies, PII, etc.
+    const primaryFirst = form.primary_contact_first_name || "Primary";
+    const primaryLast = form.primary_contact_last_name || form.household_name;
+    const { error: memberErr } = await supabase.from("family_members").insert({
+      agent_id: user.id,
+      household_id: data.id,
+      first_name: primaryFirst,
+      last_name: primaryLast,
+      email: form.primary_contact_email || null,
+      phone_mobile: form.primary_contact_phone || null,
+      is_primary: true,
+      relationship: "Head of Household",
+    });
     setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Household created");
+    if (memberErr) toast.error("Household saved but primary contact record failed: " + memberErr.message);
+    else toast.success("Household created");
     navigate({ to: "/households/$id", params: { id: data.id } });
   }
 
