@@ -434,14 +434,6 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
       annual_review_date: f.annual_review_date || null,
       agent_notes: f.agent_notes || null,
     }).eq("id", hh.id);
-      household_name: f.household_name,
-      primary_street: f.primary_street || null, primary_city: f.primary_city || null,
-      primary_state: f.primary_state || null, primary_zip: f.primary_zip || null,
-      mailing_street: f.mailing_street || null, mailing_city: f.mailing_city || null,
-      mailing_state: f.mailing_state || null, mailing_zip: f.mailing_zip || null,
-      household_income: f.household_income ? Number(f.household_income) : null,
-      agent_notes: f.agent_notes || null,
-    }).eq("id", hh.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");
@@ -463,7 +455,10 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
             <div><Label>City</Label><Input value={f.mailing_city} onChange={(e) => setF({ ...f, mailing_city: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-2"><div><Label>St</Label><Input value={f.mailing_state} onChange={(e) => setF({ ...f, mailing_state: e.target.value.toUpperCase() })} /></div><div><Label>Zip</Label><Input value={f.mailing_zip} onChange={(e) => setF({ ...f, mailing_zip: e.target.value })} /></div></div>
           </div>
-          <div><Label>Household income</Label><Input type="number" value={f.household_income} onChange={(e) => setF({ ...f, household_income: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Household income</Label><Input type="number" value={f.household_income} onChange={(e) => setF({ ...f, household_income: e.target.value })} /></div>
+            <div><Label>Annual review date</Label><Input type="date" value={f.annual_review_date} onChange={(e) => setF({ ...f, annual_review_date: e.target.value })} /></div>
+          </div>
           <div><Label>Agent notes</Label><Textarea rows={4} value={f.agent_notes} onChange={(e) => setF({ ...f, agent_notes: e.target.value })} /></div>
           <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
         </form>
