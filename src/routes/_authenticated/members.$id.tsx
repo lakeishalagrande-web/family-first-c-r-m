@@ -231,6 +231,9 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
     face_amount: policy?.face_amount != null ? String(policy.face_amount) : "",
     monthly_premium: policy?.monthly_premium != null ? String(policy.monthly_premium) : "",
     premium_frequency: (policy?.premium_frequency ?? "monthly") as "monthly" | "quarterly" | "annual",
+    cash_value: policy?.cash_value != null ? String(policy.cash_value) : "",
+    loan_balance: policy?.loan_balance != null ? String(policy.loan_balance) : "",
+    annual_review_date: policy?.annual_review_date ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -251,6 +254,9 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
       face_amount: f.face_amount ? Number(f.face_amount) : null,
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
       premium_frequency: f.premium_frequency,
+      cash_value: f.cash_value ? Number(f.cash_value) : null,
+      loan_balance: f.loan_balance ? Number(f.loan_balance) : null,
+      annual_review_date: f.annual_review_date || null,
     };
     const { error } = policy
       ? await supabase.from("policies").update(payload).eq("id", policy.id)
