@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users } from "lucide-react";
+import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
@@ -77,7 +78,15 @@ function MemberDetail() {
       </div>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle className="font-display text-lg">Health & medical</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-lg">Health & medical</CardTitle>
+          <MemberDialog
+            householdId={member.household_id}
+            member={member as never}
+            onSaved={refresh}
+            trigger={<Button variant="outline" size="sm"><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>}
+          />
+        </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
           <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${member.doctor_phone}`}</p>
           <p><span className="text-muted-foreground">Last visit:</span> {fmtDate(member.last_doctor_visit)}</p>
