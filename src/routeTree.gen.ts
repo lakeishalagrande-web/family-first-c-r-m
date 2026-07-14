@@ -25,6 +25,7 @@ import { Route as AuthenticatedPoliciesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedHouseholdsIndexRouteImport } from './routes/_authenticated/households.index'
 import { Route as AuthenticatedPoliciesNewRouteImport } from './routes/_authenticated/policies.new'
 import { Route as AuthenticatedPoliciesIdRouteImport } from './routes/_authenticated/policies.$id'
+import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
 import { Route as AuthenticatedHouseholdsNewRouteImport } from './routes/_authenticated/households.new'
 import { Route as AuthenticatedHouseholdsIdRouteImport } from './routes/_authenticated/households.$id'
 import { Route as AuthenticatedAdminPlatformRouteImport } from './routes/_authenticated/admin.platform'
@@ -114,6 +115,11 @@ const AuthenticatedPoliciesIdRoute = AuthenticatedPoliciesIdRouteImport.update({
   path: '/policies/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMembersIdRoute = AuthenticatedMembersIdRouteImport.update({
+  id: '/members/$id',
+  path: '/members/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHouseholdsNewRoute =
   AuthenticatedHouseholdsNewRouteImport.update({
     id: '/households/new',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/admin/platform': typeof AuthenticatedAdminPlatformRoute
   '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/members/$id': typeof AuthenticatedMembersIdRoute
   '/policies/$id': typeof AuthenticatedPoliciesIdRoute
   '/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/households/': typeof AuthenticatedHouseholdsIndexRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/admin/platform': typeof AuthenticatedAdminPlatformRoute
   '/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/members/$id': typeof AuthenticatedMembersIdRoute
   '/policies/$id': typeof AuthenticatedPoliciesIdRoute
   '/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/households': typeof AuthenticatedHouseholdsIndexRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/platform': typeof AuthenticatedAdminPlatformRoute
   '/_authenticated/households/$id': typeof AuthenticatedHouseholdsIdRoute
   '/_authenticated/households/new': typeof AuthenticatedHouseholdsNewRoute
+  '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
   '/_authenticated/policies/$id': typeof AuthenticatedPoliciesIdRoute
   '/_authenticated/policies/new': typeof AuthenticatedPoliciesNewRoute
   '/_authenticated/households/': typeof AuthenticatedHouseholdsIndexRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/admin/platform'
     | '/households/$id'
     | '/households/new'
+    | '/members/$id'
     | '/policies/$id'
     | '/policies/new'
     | '/households/'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin/platform'
     | '/households/$id'
     | '/households/new'
+    | '/members/$id'
     | '/policies/$id'
     | '/policies/new'
     | '/households'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/platform'
     | '/_authenticated/households/$id'
     | '/_authenticated/households/new'
+    | '/_authenticated/members/$id'
     | '/_authenticated/policies/$id'
     | '/_authenticated/policies/new'
     | '/_authenticated/households/'
@@ -415,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPoliciesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/members/$id': {
+      id: '/_authenticated/members/$id'
+      path: '/members/$id'
+      fullPath: '/members/$id'
+      preLoaderRoute: typeof AuthenticatedMembersIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/households/new': {
       id: '/_authenticated/households/new'
       path: '/households/new'
@@ -488,6 +507,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedHouseholdsIdRoute: typeof AuthenticatedHouseholdsIdRoute
   AuthenticatedHouseholdsNewRoute: typeof AuthenticatedHouseholdsNewRoute
+  AuthenticatedMembersIdRoute: typeof AuthenticatedMembersIdRoute
   AuthenticatedPoliciesIdRoute: typeof AuthenticatedPoliciesIdRoute
   AuthenticatedPoliciesNewRoute: typeof AuthenticatedPoliciesNewRoute
   AuthenticatedHouseholdsIndexRoute: typeof AuthenticatedHouseholdsIndexRoute
@@ -505,6 +525,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedHouseholdsIdRoute: AuthenticatedHouseholdsIdRoute,
   AuthenticatedHouseholdsNewRoute: AuthenticatedHouseholdsNewRoute,
+  AuthenticatedMembersIdRoute: AuthenticatedMembersIdRoute,
   AuthenticatedPoliciesIdRoute: AuthenticatedPoliciesIdRoute,
   AuthenticatedPoliciesNewRoute: AuthenticatedPoliciesNewRoute,
   AuthenticatedHouseholdsIndexRoute: AuthenticatedHouseholdsIndexRoute,
@@ -523,13 +544,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

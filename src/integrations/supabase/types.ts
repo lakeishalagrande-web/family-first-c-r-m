@@ -528,6 +528,7 @@ export type Database = {
           policy_loan_amount: number | null
           policy_number: string | null
           policy_type: string | null
+          premium_frequency: string | null
           product_type: Database["public"]["Enums"]["product_type"] | null
           rate_class: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline: string | null
@@ -561,6 +562,7 @@ export type Database = {
           policy_loan_amount?: number | null
           policy_number?: string | null
           policy_type?: string | null
+          premium_frequency?: string | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
@@ -594,6 +596,7 @@ export type Database = {
           policy_loan_amount?: number | null
           policy_number?: string | null
           policy_type?: string | null
+          premium_frequency?: string | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
@@ -845,6 +848,7 @@ export type Database = {
         | "surrendered"
         | "paid_up"
         | "pending"
+        | "cancelled"
       product_type:
         | "term"
         | "whole_life"
@@ -1022,6 +1026,7 @@ export const Constants = {
         "surrendered",
         "paid_up",
         "pending",
+        "cancelled",
       ],
       product_type: [
         "term",

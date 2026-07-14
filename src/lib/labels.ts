@@ -25,11 +25,22 @@ export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
   pending: "Pending",
+  cancelled: "Cancelled",
   extended_term: "Extended Term",
   reinstatement_eligible: "Reinstatement Eligible",
   surrendered: "Surrendered",
   paid_up: "Paid Up",
 };
+
+export const PREMIUM_FREQUENCY_LABEL: Record<"monthly" | "quarterly" | "annual", string> = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  annual: "Annual",
+};
+
+export const POLICY_TYPE_OPTIONS = [
+  "Life", "Health", "Auto", "Home", "Renters", "Annuity", "Long-Term Care", "Disability", "Other",
+] as const;
 export const PAYMENT_STRUCTURE_LABEL: Record<Enums["payment_structure"], string> = {
   ten_pay: "10-Pay",
   twenty_pay: "20-Pay",
