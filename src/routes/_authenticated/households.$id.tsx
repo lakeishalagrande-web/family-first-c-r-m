@@ -416,6 +416,7 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
     mailing_state: (get("mailing_state") as string) ?? "",
     mailing_zip: (get("mailing_zip") as string) ?? "",
     household_income: String(get("household_income") ?? ""),
+    annual_review_date: (get("annual_review_date") as string) ?? "",
     agent_notes: (get("agent_notes") as string) ?? "",
   });
   const [saving, setSaving] = useState(false);
@@ -424,6 +425,15 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
     e.preventDefault();
     setSaving(true);
     const { error } = await supabase.from("households").update({
+      household_name: f.household_name,
+      primary_street: f.primary_street || null, primary_city: f.primary_city || null,
+      primary_state: f.primary_state || null, primary_zip: f.primary_zip || null,
+      mailing_street: f.mailing_street || null, mailing_city: f.mailing_city || null,
+      mailing_state: f.mailing_state || null, mailing_zip: f.mailing_zip || null,
+      household_income: f.household_income ? Number(f.household_income) : null,
+      annual_review_date: f.annual_review_date || null,
+      agent_notes: f.agent_notes || null,
+    }).eq("id", hh.id);
       household_name: f.household_name,
       primary_street: f.primary_street || null, primary_city: f.primary_city || null,
       primary_state: f.primary_state || null, primary_zip: f.primary_zip || null,
