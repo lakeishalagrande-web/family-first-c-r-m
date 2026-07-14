@@ -463,62 +463,128 @@ function HouseholdInfoForm({ hh, onSaved }: { hh: Record<string, unknown> & { id
 }
 
 // ---------- Quotes Panel ----------
-function QuotesPanel({ householdId, quotes, onChange }: { householdId: string; quotes: Array<Record<string, unknown> & { id: string; slot: number }>; onChange: () => void }) {
+function QuotesPanel({ householdId, quotes, onChange }: { householdId: string; quotes: Array<Record<string, unknown> & { id: string }>; onChange: () => void }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {[1, 2].map((slot) => {
-        const q = quotes.find((qq) => qq.slot === slot);
-        return <QuoteCard key={slot} householdId={householdId} slot={slot} quote={q} onChange={onChange} />;
-      })}
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <QuoteDialog householdId={householdId} onSaved={onChange}
+          trigger={<Button size="sm" className="bg-gold text-gold-foreground hover:bg-gold/90"><Plus className="h-4 w-4 mr-1" /> Add quote</Button>} />
+      </div>
+      {quotes.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No quotes yet.</CardContent></Card>}
+      <div className="space-y-2">
+        {quotes.map((q) => {
+          const carrier = q.carrier as string | null;
+          const label = q.label as string | null;
+          const face = q.face_amount as number | null;
+          const prem = q.monthly_premium as number | null;
+          const status = (q.status as string) ?? "Quoted";
+          const quoted = q.quoted_date as string | null;
+          return (
+            <Card key={q.id} className="shadow-card">
+              <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium">{carrier || "—"}{label && ` · ${label}`}</p>
+                    <Badge variant={status === "Accepted" ? "default" : status === "Declined" ? "destructive" : "secondary"}>{status}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Face {fmtCurrency(Number(face))} · Premium {fmtCurrency(Number(prem))}
+                    {quoted && ` · Quoted ${fmtDate(quoted)}`}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <QuoteDialog householdId={householdId} quote={q} onSaved={onChange}
+                    trigger={<Button variant="ghost" size="icon"><Edit2 className="h-3 w-3" /></Button>} />
+                  <Button variant="ghost" size="icon" onClick={async () => {
+                    if (!confirm("Delete quote?")) return;
+                    const { error } = await supabase.from("quote_scenarios").delete().eq("id", q.id);
+                    if (error) return toast.error(error.message);
+                    onChange();
+                  }}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function QuoteCard({ householdId, slot, quote, onChange }: { householdId: string; slot: number; quote?: Record<string, unknown> & { id: string }; onChange: () => void }) {
+function QuoteDialog({ householdId, quote, onSaved, trigger }: { householdId: string; quote?: Record<string, unknown> & { id: string }; onSaved: () => void; trigger: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   const get = (k: string) => quote ? (quote as Record<string, unknown>)[k] : null;
   const [f, setF] = useState({
     label: (get("label") as string) ?? "",
     carrier: (get("carrier") as string) ?? "",
     face_amount: String(get("face_amount") ?? ""),
     monthly_premium: String(get("monthly_premium") ?? ""),
+    quoted_date: (get("quoted_date") as string) ?? new Date().toISOString().slice(0, 10),
+    status: (get("status") as string) ?? "Quoted",
     notes: (get("notes") as string) ?? "",
   });
   const [saving, setSaving] = useState(false);
 
-  async function save() {
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
     const payload = {
-      agent_id: user.id, household_id: householdId, slot,
+      agent_id: user.id, household_id: householdId,
       label: f.label || null, carrier: f.carrier || null,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
+      quoted_date: f.quoted_date || null,
+      status: f.status,
       notes: f.notes || null,
     };
-    if (quote) {
-      await supabase.from("quote_scenarios").update(payload).eq("id", quote.id);
-    } else {
-      await supabase.from("quote_scenarios").insert(payload);
-    }
+    const { error } = quote
+      ? await supabase.from("quote_scenarios").update(payload).eq("id", quote.id)
+      : await supabase.from("quote_scenarios").insert({ ...payload, slot: Math.floor(Math.random() * 100000) });
     setSaving(false);
+    if (error) return toast.error(error.message);
     toast.success("Saved");
-    onChange();
+    setOpen(false);
+    onSaved();
   }
 
   return (
-    <Card className="shadow-card">
-      <CardHeader><CardTitle className="font-display text-lg">Scenario {slot}</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        <div><Label>Label</Label><Input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="e.g. 20-yr term" /></div>
-        <div><Label>Carrier</Label><Input value={f.carrier} onChange={(e) => setF({ ...f, carrier: e.target.value })} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Face amount</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
-          <div><Label>Monthly premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
-        </div>
-        <div><Label>Notes</Label><Textarea rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
-        <Button onClick={save} disabled={saving} className="w-full">{saving ? "Saving…" : "Save scenario"}</Button>
-      </CardContent>
-    </Card>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle className="font-display">{quote ? "Edit" : "Add"} quote</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Carrier</Label><Input value={f.carrier} onChange={(e) => setF({ ...f, carrier: e.target.value })} /></div>
+            <div><Label>Policy type / label</Label><Input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="e.g. 20-yr term" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Face amount</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
+            <div><Label>Premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Date quoted</Label><Input type="date" value={f.quoted_date} onChange={(e) => setF({ ...f, quoted_date: e.target.value })} /></div>
+            <div>
+              <Label>Status</Label>
+              <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Quoted">Quoted</SelectItem>
+                  <SelectItem value="Presented">Presented</SelectItem>
+                  <SelectItem value="Accepted">Accepted</SelectItem>
+                  <SelectItem value="Declined">Declined</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div><Label>Notes</Label><Textarea rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
