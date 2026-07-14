@@ -273,7 +273,7 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
       agent_id: user.id,
       household_id: householdId,
       insured_member_id: memberId,
-      carrier: f.carrier || null,
+      carrier: carrierValue,
       policy_type: f.policy_type || null,
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
@@ -308,9 +308,15 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
                 <SelectTrigger><SelectValue placeholder="Select carrier…" /></SelectTrigger>
                 <SelectContent>
                   {carriers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                  <SelectItem value="__other__">Other (type name)</SelectItem>
                 </SelectContent>
               </Select>
+              {f.carrier === "__other__" && (
+                <Input className="mt-2" placeholder="Carrier name"
+                  value={f.customCarrier} onChange={(e) => setF({ ...f, customCarrier: e.target.value })} />
+              )}
             </div>
+
             <div>
               <Label>Policy type *</Label>
               <Select value={f.policy_type} onValueChange={(v) => setF({ ...f, policy_type: v })}>
