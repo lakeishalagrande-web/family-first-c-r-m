@@ -218,6 +218,7 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
   const encryptFn = useServerFn(encryptAndStorePII);
 
   const initial = member ?? {};
+  const initialMeds = ((initial as { medications?: Array<{ name: string; dosage?: string }> }).medications ?? []) as Array<{ name: string; dosage?: string }>;
   const [f, setF] = useState({
     first_name: (initial as { first_name?: string }).first_name ?? "",
     middle_name: (initial as { middle_name?: string }).middle_name ?? "",
@@ -236,9 +237,13 @@ function MemberDialog({ householdId, member, onSaved, trigger }: { householdId: 
     disability_notes: (initial as { disability_notes?: string }).disability_notes ?? "",
     smoker: !!(initial as { smoker?: boolean }).smoker,
     is_primary: !!(initial as { is_primary?: boolean }).is_primary,
+    doctor_name: (initial as { doctor_name?: string }).doctor_name ?? "",
+    doctor_phone: (initial as { doctor_phone?: string }).doctor_phone ?? "",
+    last_doctor_visit: (initial as { last_doctor_visit?: string }).last_doctor_visit ?? "",
     ssn: "",
     medicare: "",
   });
+  const [meds, setMeds] = useState<Array<{ name: string; dosage?: string }>>(initialMeds);
   const [saving, setSaving] = useState(false);
 
   async function save(e: React.FormEvent) {
