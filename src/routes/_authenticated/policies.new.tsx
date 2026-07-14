@@ -41,7 +41,7 @@ function NewPolicy() {
   });
 
   const [f, setF] = useState({
-    policy_number: "", carrier: "", product_type: "" as string,
+    policy_number: "", carrier: "", custom_carrier: "", product_type: "" as string,
     insured_member_id: "", owner_name: "", owner_type: "" as string,
     face_amount: "", monthly_premium: "", payment_structure: "" as string,
     rate_class: "" as string, status: "active" as string,
@@ -50,6 +50,7 @@ function NewPolicy() {
     automated_premium_loan: false, existing_coverage: false,
     application_date: "", issue_date: "", notes: "",
   });
+
 
   useEffect(() => { if (search.household) setHouseholdId(search.household); }, [search.household]);
 
