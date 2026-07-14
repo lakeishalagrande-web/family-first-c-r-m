@@ -170,11 +170,14 @@ function MemberCard({ member, onChange, householdId }: { member: ReturnType<type
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-medium">{member.first_name} {member.last_name}</p>
+              <Link to="/members/$id" params={{ id: member.id }} className="font-medium hover:underline hover:text-primary">
+                {member.first_name} {member.last_name}
+              </Link>
+              {member.date_of_birth && <span className="text-xs text-muted-foreground">age {calcAge(member.date_of_birth)}</span>}
               {member.is_primary && <Badge className="bg-gold text-gold-foreground">Primary</Badge>}
             </div>
             <p className="text-xs text-muted-foreground">
-              {member.relationship || "—"}{member.date_of_birth && ` · age ${calcAge(member.date_of_birth)}`}
+              {member.relationship || "—"}{member.date_of_birth && ` · DOB ${new Date(member.date_of_birth).toLocaleDateString()}`}
             </p>
           </div>
           <div className="flex gap-1">
