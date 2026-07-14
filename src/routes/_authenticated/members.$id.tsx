@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users } from "lucide-react";
+import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
