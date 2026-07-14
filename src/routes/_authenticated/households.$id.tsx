@@ -96,7 +96,7 @@ function HouseholdDetail() {
           {members.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No family members yet. Add the primary insured to begin.</CardContent></Card>}
           <div className="grid gap-3 md:grid-cols-2">
             {members.map((m) => (
-              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} />
+              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} policyTypes={Array.from(new Set(policies.filter((p) => p.insured_member_id === m.id).map((p) => p.policy_type).filter(Boolean) as string[]))} />
             ))}
           </div>
         </TabsContent>
@@ -146,7 +146,7 @@ function HouseholdDetail() {
 }
 
 // ---------- Member Card ----------
-function MemberCard({ member, onChange, householdId }: { member: ReturnType<typeof Object> & Record<string, unknown> & { id: string; first_name: string; last_name: string; relationship: string | null; date_of_birth: string | null; gender: string | null; email: string | null; phone_mobile: string | null; ssn_last4: string | null; medicare_last4: string | null; is_primary: boolean | null }; onChange: () => void; householdId: string }) {
+function MemberCard({ member, onChange, householdId, policyTypes }: { member: ReturnType<typeof Object> & Record<string, unknown> & { id: string; first_name: string; last_name: string; relationship: string | null; date_of_birth: string | null; gender: string | null; email: string | null; phone_mobile: string | null; ssn_last4: string | null; medicare_last4: string | null; is_primary: boolean | null; height_inches: number | null }; onChange: () => void; householdId: string; policyTypes: string[] }) {
   const reveal = useServerFn(revealPII);
   const [revealed, setRevealed] = useState<{ ssn?: string; medicare?: string }>({});
 
@@ -188,9 +188,18 @@ function MemberCard({ member, onChange, householdId }: { member: ReturnType<type
             <Button variant="ghost" size="icon" onClick={deleteMember}><Trash2 className="h-3 w-3 text-destructive" /></Button>
           </div>
         </div>
+        {policyTypes.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {policyTypes.map((t) => (
+              <Badge key={t} variant="secondary" className="text-[10px]">{t} ✓</Badge>
+            ))}
+          </div>
+        )}
         <div className="text-xs space-y-1 text-muted-foreground">
+          {member.height_inches != null && <p>📏 {formatHeight(Number(member.height_inches))}</p>}
           {member.email && <p>📧 {member.email}</p>}
-          {member.phone_mobile && <p>📱 {member.phone_mobile}</p>}
+          {member.phone_mobile && <p>📱 {formatPhone(member.phone_mobile)}</p>}
+
           <div className="flex items-center gap-2">
             <span>SSN: <span className="font-mono">{revealed.ssn || mask(member.ssn_last4)}</span></span>
             {member.ssn_last4 && (
@@ -342,18 +351,23 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Height (in)</Label><Input type="number" value={f.height_inches} onChange={(e) => setF({ ...f, height_inches: e.target.value })} /></div>
+            <div>
+              <Label>Height</Label>
+              <HeightInput totalInches={f.height_inches} onChange={(v) => setF({ ...f, height_inches: v })} />
+            </div>
             <div><Label>Weight (lbs)</Label><Input type="number" value={f.weight_lbs} onChange={(e) => setF({ ...f, weight_lbs: e.target.value })} /></div>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Occupation</Label><Input value={f.occupation} onChange={(e) => setF({ ...f, occupation: e.target.value })} /></div>
             <div><Label>Annual income</Label><Input type="number" value={f.annual_income} onChange={(e) => setF({ ...f, annual_income: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div><Label>Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
-            <div><Label>Mobile</Label><Input value={f.phone_mobile} onChange={(e) => setF({ ...f, phone_mobile: e.target.value })} /></div>
-            <div><Label>Home phone</Label><Input value={f.phone_home} onChange={(e) => setF({ ...f, phone_home: e.target.value })} /></div>
+            <div><Label>Mobile</Label><PhoneInput value={f.phone_mobile} onChange={(v) => setF({ ...f, phone_mobile: v })} /></div>
+            <div><Label>Home phone</Label><PhoneInput value={f.phone_home} onChange={(v) => setF({ ...f, phone_home: v })} /></div>
           </div>
+
           <div className="rounded-md border border-gold/30 bg-gold/5 p-3 space-y-3">
             <p className="text-xs font-medium text-gold uppercase tracking-wider">Encrypted — stored at rest</p>
             <div className="grid grid-cols-2 gap-3">
@@ -372,9 +386,10 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Health & medical</p>
             <div className="grid grid-cols-3 gap-3">
               <div><Label>Doctor name</Label><Input value={f.doctor_name} onChange={(e) => setF({ ...f, doctor_name: e.target.value })} /></div>
-              <div><Label>Doctor phone</Label><Input value={f.doctor_phone} onChange={(e) => setF({ ...f, doctor_phone: e.target.value })} /></div>
+              <div><Label>Doctor phone</Label><PhoneInput value={f.doctor_phone} onChange={(v) => setF({ ...f, doctor_phone: v })} /></div>
               <div><Label>Last visit</Label><Input type="date" value={f.last_doctor_visit} onChange={(e) => setF({ ...f, last_doctor_visit: e.target.value })} /></div>
             </div>
+
             <div>
               <div className="flex items-center justify-between mb-1">
                 <Label>Medications</Label>

@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneInput } from "@/components/phone-input";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/households/new")({
   head: () => ({ meta: [{ title: "New Household — AgentLifeline" }] }),
@@ -98,7 +100,7 @@ function NewHousehold() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2"><Label>First name</Label><Input value={form.primary_contact_first_name} onChange={(e) => set("primary_contact_first_name", e.target.value)} /></div>
             <div className="space-y-2"><Label>Last name</Label><Input value={form.primary_contact_last_name} onChange={(e) => set("primary_contact_last_name", e.target.value)} /></div>
-            <div className="space-y-2"><Label>Phone</Label><Input type="tel" value={form.primary_contact_phone} onChange={(e) => set("primary_contact_phone", e.target.value)} /></div>
+            <div className="space-y-2"><Label>Phone</Label><PhoneInput value={form.primary_contact_phone} onChange={(v) => set("primary_contact_phone", v)} /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.primary_contact_email} onChange={(e) => set("primary_contact_email", e.target.value)} /></div>
           </CardContent>
         </Card>
