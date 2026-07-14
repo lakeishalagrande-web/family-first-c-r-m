@@ -100,7 +100,7 @@ function MemberDetail() {
           />
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
-          <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${member.doctor_phone}`}</p>
+          <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${formatPhone(member.doctor_phone)}`}</p>
           <p><span className="text-muted-foreground">Last visit:</span> {fmtDate(member.last_doctor_visit)}</p>
           <div className="sm:col-span-2">
             <p className="text-muted-foreground mb-1">Medications:</p>
