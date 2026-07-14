@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
+  BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
 import type { Database } from "@/integrations/supabase/types";
 
