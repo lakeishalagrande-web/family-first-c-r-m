@@ -41,7 +41,7 @@ function NewPolicy() {
   });
 
   const [f, setF] = useState({
-    policy_number: "", carrier: "", product_type: "" as string,
+    policy_number: "", carrier: "", custom_carrier: "", product_type: "" as string,
     insured_member_id: "", owner_name: "", owner_type: "" as string,
     face_amount: "", monthly_premium: "", payment_structure: "" as string,
     rate_class: "" as string, status: "active" as string,
@@ -50,6 +50,7 @@ function NewPolicy() {
     automated_premium_loan: false, existing_coverage: false,
     application_date: "", issue_date: "", notes: "",
   });
+
 
   useEffect(() => { if (search.household) setHouseholdId(search.household); }, [search.household]);
 
@@ -62,7 +63,7 @@ function NewPolicy() {
     const { data, error } = await supabase.from("policies").insert({
       agent_id: user.id, household_id: householdId,
       insured_member_id: f.insured_member_id || null,
-      policy_number: f.policy_number || null, carrier: f.carrier || null,
+      policy_number: f.policy_number || null, carrier: (f.carrier === "__other__" ? (f.custom_carrier || null) : (f.carrier || null)),
       product_type: (f.product_type || null) as never,
       owner_name: f.owner_name || null, owner_type: (f.owner_type || null) as never,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
@@ -117,9 +118,17 @@ function NewPolicy() {
             <Label>Carrier</Label>
             <Select value={f.carrier} onValueChange={(v) => setF({ ...f, carrier: v })}>
               <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent className="max-h-72">{carriers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+              <SelectContent className="max-h-72">
+                {carriers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                <SelectItem value="__other__">Other (type name)</SelectItem>
+              </SelectContent>
             </Select>
+            {f.carrier === "__other__" && (
+              <Input className="mt-2" placeholder="Carrier name"
+                value={f.custom_carrier} onChange={(e) => setF({ ...f, custom_carrier: e.target.value })} />
+            )}
           </div>
+
           <div>
             <Label>Product type</Label>
             <EnumSelect value={f.product_type} onChange={(v) => setF({ ...f, product_type: v })} options={PRODUCT_TYPE_LABEL} />

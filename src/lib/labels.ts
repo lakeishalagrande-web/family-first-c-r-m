@@ -39,8 +39,10 @@ export const PREMIUM_FREQUENCY_LABEL: Record<"monthly" | "quarterly" | "annual",
 };
 
 export const POLICY_TYPE_OPTIONS = [
-  "Life", "Health", "Auto", "Home", "Renters", "Annuity", "Long-Term Care", "Disability", "Other",
+  "Life", "Fire", "Medicare", "Legal Shield",
+  "Health", "Auto", "Home", "Renters", "Annuity", "Long-Term Care", "Disability", "Other",
 ] as const;
+
 
 export const BENEFICIARY_RELATIONSHIP_OPTIONS = [
   "Spouse", "Child", "Mother", "Father", "Grandmother", "Grandfather", "Sibling", "Trust", "Other",

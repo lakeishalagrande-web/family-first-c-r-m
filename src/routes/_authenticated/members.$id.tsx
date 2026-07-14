@@ -17,7 +17,10 @@ import {
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
   BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
+import { formatPhone } from "@/components/phone-input";
+import { formatHeight } from "@/components/height-input";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type PolicyStatus = Database["public"]["Enums"]["policy_status"];
 type BeneficiaryType = Database["public"]["Enums"]["beneficiary_type"];
@@ -68,14 +71,23 @@ function MemberDetail() {
               {member.relationship || "—"}
               {member.date_of_birth && ` · DOB ${fmtDate(member.date_of_birth)}`}
               {member.email && ` · ${member.email}`}
-              {member.phone_mobile && ` · ${member.phone_mobile}`}
+              {member.phone_mobile && ` · ${formatPhone(member.phone_mobile)}`}
+              {member.height_inches != null && ` · ${formatHeight(Number(member.height_inches))}`}
             </p>
+            {policies.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {Array.from(new Set(policies.map((p) => p.policy_type).filter(Boolean) as string[])).map((t) => (
+                  <Badge key={t} variant="secondary">{t} ✓</Badge>
+                ))}
+              </div>
+            )}
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
             View household
           </Button>
         </div>
       </div>
+
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -88,7 +100,7 @@ function MemberDetail() {
           />
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
-          <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${member.doctor_phone}`}</p>
+          <p><span className="text-muted-foreground">Doctor:</span> {member.doctor_name || "—"}{member.doctor_phone && ` · ${formatPhone(member.doctor_phone)}`}</p>
           <p><span className="text-muted-foreground">Last visit:</span> {fmtDate(member.last_doctor_visit)}</p>
           <div className="sm:col-span-2">
             <p className="text-muted-foreground mb-1">Medications:</p>
@@ -231,8 +243,12 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
   onSaved: () => void; trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const knownCarriers = new Set(carriers.map((c) => c.name));
+  const initialCarrier = policy?.carrier ?? "";
+  const initialIsOther = !!initialCarrier && !knownCarriers.has(initialCarrier);
   const [f, setF] = useState({
-    carrier: policy?.carrier ?? "",
+    carrier: initialIsOther ? "__other__" : initialCarrier,
+    customCarrier: initialIsOther ? initialCarrier : "",
     policy_type: policy?.policy_type ?? "",
     policy_number: policy?.policy_number ?? "",
     effective_date: policy?.effective_date ?? "",
@@ -251,11 +267,13 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+    const carrierValue = f.carrier === "__other__" ? (f.customCarrier || null) : (f.carrier || null);
+
     const payload = {
       agent_id: user.id,
       household_id: householdId,
       insured_member_id: memberId,
-      carrier: f.carrier || null,
+      carrier: carrierValue,
       policy_type: f.policy_type || null,
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
@@ -290,9 +308,15 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
                 <SelectTrigger><SelectValue placeholder="Select carrier…" /></SelectTrigger>
                 <SelectContent>
                   {carriers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                  <SelectItem value="__other__">Other (type name)</SelectItem>
                 </SelectContent>
               </Select>
+              {f.carrier === "__other__" && (
+                <Input className="mt-2" placeholder="Carrier name"
+                  value={f.customCarrier} onChange={(e) => setF({ ...f, customCarrier: e.target.value })} />
+              )}
             </div>
+
             <div>
               <Label>Policy type *</Label>
               <Select value={f.policy_type} onValueChange={(v) => setF({ ...f, policy_type: v })}>
