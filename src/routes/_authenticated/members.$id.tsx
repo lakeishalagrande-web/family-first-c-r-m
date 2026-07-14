@@ -388,7 +388,15 @@ function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
         <form onSubmit={save} className="space-y-3">
           <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Relationship</Label><Input value={f.relationship} onChange={(e) => setF({ ...f, relationship: e.target.value })} placeholder="e.g. Spouse" /></div>
+            <div>
+              <Label>Relationship</Label>
+              <Select value={f.relationship} onValueChange={(v) => setF({ ...f, relationship: v })}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent>
+                  {BENEFICIARY_RELATIONSHIP_OPTIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>Percentage</Label><Input type="number" min="0" max="100" step="0.01" value={f.percentage} onChange={(e) => setF({ ...f, percentage: e.target.value })} /></div>
           </div>
           <div>
