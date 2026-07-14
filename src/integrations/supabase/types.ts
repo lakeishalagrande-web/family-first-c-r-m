@@ -44,6 +44,7 @@ export type Database = {
           alert_type: Database["public"]["Enums"]["alert_type"]
           created_at: string
           description: string | null
+          dismiss_reason: string | null
           due_date: string
           id: string
           is_dismissed: boolean | null
@@ -56,6 +57,7 @@ export type Database = {
           alert_type: Database["public"]["Enums"]["alert_type"]
           created_at?: string
           description?: string | null
+          dismiss_reason?: string | null
           due_date: string
           id?: string
           is_dismissed?: boolean | null
@@ -68,6 +70,7 @@ export type Database = {
           alert_type?: Database["public"]["Enums"]["alert_type"]
           created_at?: string
           description?: string | null
+          dismiss_reason?: string | null
           due_date?: string
           id?: string
           is_dismissed?: boolean | null
@@ -247,6 +250,8 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           disability_notes: string | null
+          doctor_name: string | null
+          doctor_phone: string | null
           email: string | null
           first_name: string
           gender: string | null
@@ -255,9 +260,11 @@ export type Database = {
           household_id: string
           id: string
           is_primary: boolean | null
+          last_doctor_visit: string | null
           last_name: string
           medicare_encrypted: string | null
           medicare_last4: string | null
+          medications: Json
           middle_name: string | null
           occupation: string | null
           phone_home: string | null
@@ -275,6 +282,8 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           disability_notes?: string | null
+          doctor_name?: string | null
+          doctor_phone?: string | null
           email?: string | null
           first_name: string
           gender?: string | null
@@ -283,9 +292,11 @@ export type Database = {
           household_id: string
           id?: string
           is_primary?: boolean | null
+          last_doctor_visit?: string | null
           last_name: string
           medicare_encrypted?: string | null
           medicare_last4?: string | null
+          medications?: Json
           middle_name?: string | null
           occupation?: string | null
           phone_home?: string | null
@@ -303,6 +314,8 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           disability_notes?: string | null
+          doctor_name?: string | null
+          doctor_phone?: string | null
           email?: string | null
           first_name?: string
           gender?: string | null
@@ -311,9 +324,11 @@ export type Database = {
           household_id?: string
           id?: string
           is_primary?: boolean | null
+          last_doctor_visit?: string | null
           last_name?: string
           medicare_encrypted?: string | null
           medicare_last4?: string | null
+          medications?: Json
           middle_name?: string | null
           occupation?: string | null
           phone_home?: string | null
@@ -395,6 +410,7 @@ export type Database = {
           address_line2: string | null
           agent_id: string
           agent_notes: string | null
+          annual_review_date: string | null
           city: string | null
           created_at: string
           household_income: number | null
@@ -421,6 +437,7 @@ export type Database = {
           address_line2?: string | null
           agent_id: string
           agent_notes?: string | null
+          annual_review_date?: string | null
           city?: string | null
           created_at?: string
           household_income?: number | null
@@ -447,6 +464,7 @@ export type Database = {
           address_line2?: string | null
           agent_id?: string
           agent_notes?: string | null
+          annual_review_date?: string | null
           city?: string | null
           created_at?: string
           household_income?: number | null
@@ -503,6 +521,7 @@ export type Database = {
       policies: {
         Row: {
           agent_id: string
+          annual_review_date: string | null
           application_date: string | null
           automated_premium_loan: boolean | null
           carrier: string | null
@@ -518,6 +537,7 @@ export type Database = {
           id: string
           insured_member_id: string | null
           issue_date: string | null
+          loan_balance: number | null
           monthly_premium: number | null
           notes: string | null
           owner_name: string | null
@@ -537,6 +557,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          annual_review_date?: string | null
           application_date?: string | null
           automated_premium_loan?: boolean | null
           carrier?: string | null
@@ -552,6 +573,7 @@ export type Database = {
           id?: string
           insured_member_id?: string | null
           issue_date?: string | null
+          loan_balance?: number | null
           monthly_premium?: number | null
           notes?: string | null
           owner_name?: string | null
@@ -571,6 +593,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          annual_review_date?: string | null
           application_date?: string | null
           automated_premium_loan?: boolean | null
           carrier?: string | null
@@ -586,6 +609,7 @@ export type Database = {
           id?: string
           insured_member_id?: string | null
           issue_date?: string | null
+          loan_balance?: number | null
           monthly_premium?: number | null
           notes?: string | null
           owner_name?: string | null
@@ -675,14 +699,17 @@ export type Database = {
           household_id: string
           id: string
           label: string | null
+          member_id: string | null
           monthly_premium: number | null
           notes: string | null
           payment_structure:
             | Database["public"]["Enums"]["payment_structure"]
             | null
           product_type: Database["public"]["Enums"]["product_type"] | null
+          quoted_date: string | null
           rate_class: Database["public"]["Enums"]["rate_class"] | null
           slot: number
+          status: string
         }
         Insert: {
           agent_id: string
@@ -692,14 +719,17 @@ export type Database = {
           household_id: string
           id?: string
           label?: string | null
+          member_id?: string | null
           monthly_premium?: number | null
           notes?: string | null
           payment_structure?:
             | Database["public"]["Enums"]["payment_structure"]
             | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
+          quoted_date?: string | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           slot: number
+          status?: string
         }
         Update: {
           agent_id?: string
@@ -709,14 +739,17 @@ export type Database = {
           household_id?: string
           id?: string
           label?: string | null
+          member_id?: string | null
           monthly_premium?: number | null
           notes?: string | null
           payment_structure?:
             | Database["public"]["Enums"]["payment_structure"]
             | null
           product_type?: Database["public"]["Enums"]["product_type"] | null
+          quoted_date?: string | null
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           slot?: number
+          status?: string
         }
         Relationships: [
           {
@@ -724,6 +757,13 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_scenarios_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
         ]
