@@ -243,8 +243,12 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
   onSaved: () => void; trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const knownCarriers = new Set(carriers.map((c) => c.name));
+  const initialCarrier = policy?.carrier ?? "";
+  const initialIsOther = !!initialCarrier && !knownCarriers.has(initialCarrier);
   const [f, setF] = useState({
-    carrier: policy?.carrier ?? "",
+    carrier: initialIsOther ? "__other__" : initialCarrier,
+    customCarrier: initialIsOther ? initialCarrier : "",
     policy_type: policy?.policy_type ?? "",
     policy_number: policy?.policy_number ?? "",
     effective_date: policy?.effective_date ?? "",
@@ -263,6 +267,8 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+    const carrierValue = f.carrier === "__other__" ? (f.customCarrier || null) : (f.carrier || null);
+
     const payload = {
       agent_id: user.id,
       household_id: householdId,
