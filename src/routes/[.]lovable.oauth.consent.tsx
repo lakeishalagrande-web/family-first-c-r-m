@@ -111,7 +111,7 @@ function Consent() {
           )}
           {scopes.length > 0 && (
             <ul className="text-sm list-disc pl-5 space-y-1">
-              {scopes.map((s) => (
+              {scopes.map((s: string) => (
                 <li key={s}>{s}</li>
               ))}
             </ul>
