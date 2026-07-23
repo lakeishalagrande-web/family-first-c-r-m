@@ -24,6 +24,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
   const [loading, setLoading] = useState(false);
 
   const [loginEmail, setLoginEmail] = useState("");
