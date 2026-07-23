@@ -79,7 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e092f737-3123-4ebf-8d24-216ec1efb7d4/id-preview-e12ce390--50860da6-97a1-470b-a351-fcbc43cc4ba5.lovable.app-1781949275817.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e092f737-3123-4ebf-8d24-216ec1efb7d4/id-preview-e12ce390--50860da6-97a1-470b-a351-fcbc43cc4ba5.lovable.app-1781949275817.png" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
