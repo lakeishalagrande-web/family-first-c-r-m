@@ -49,7 +49,8 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back");
-    navigate({ to: "/dashboard" });
+    if (safeNext) window.location.href = safeNext;
+    else navigate({ to: "/dashboard" });
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -59,7 +60,7 @@ function AuthPage() {
       email: signupEmail.trim(),
       password: signupPwd,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}${safeNext ?? "/dashboard"}`,
         data: { full_name: signupName },
       },
     });
