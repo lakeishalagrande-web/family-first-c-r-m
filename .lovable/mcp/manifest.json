@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ealkvjcrmamubjfjoxfu.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "agentlifeline-mcp",
+      "version": "0.1.0",
+      "title": "AgentLifeline"
+    },
+    "tools": [
+      {
+        "name": "list_households",
+        "title": "List households",
+        "description": "List the signed-in agent's households (CRM records). Supports optional case-insensitive name search and a row limit.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "search": {
+              "description": "Optional case-insensitive substring to match household_name.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows to return (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_household",
+        "title": "Get household detail",
+        "description": "Fetch one household with its family members and policies. Sensitive PII (SSN, Medicare ID) is never returned.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "household_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Household UUID."
+            }
+          },
+          "required": [
+            "household_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_upcoming_alerts",
+        "title": "List upcoming alerts",
+        "description": "List the signed-in agent's open alerts (policy lapses, reinstatement deadlines, annual reviews). Ordered by due date ascending.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "within_days": {
+              "description": "Only alerts due within this many days (default 30).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_follow_up",
+        "title": "Create follow-up",
+        "description": "Create a follow-up task for the signed-in agent, optionally linked to a household. Use this to log next steps from a conversation.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "household_id": {
+              "description": "Optional household to link the follow-up to.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Follow-up description."
+            },
+            "due_date": {
+              "description": "Optional ISO date (YYYY-MM-DD) when the follow-up is due.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "note"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
