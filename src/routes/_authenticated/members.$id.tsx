@@ -76,11 +76,12 @@ function MemberDetail() {
             </p>
             {policies.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
-                {Array.from(new Set(policies.map((p) => p.policy_type).filter(Boolean) as string[])).map((t) => (
+                {Array.from(new Set(policies.map((p) => productLabelOf(p)).filter((t) => t !== "—"))).map((t) => (
                   <Badge key={t} variant="secondary">{t} ✓</Badge>
                 ))}
               </div>
             )}
+
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
             View household
