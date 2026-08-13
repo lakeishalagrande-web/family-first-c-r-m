@@ -12,6 +12,7 @@ export type Alert = Tables["alerts"]["Row"];
 export type Profile = Tables["profiles"]["Row"];
 
 export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
+  life: "Life",
   term: "Term Life",
   whole_life: "Whole Life",
   final_expense: "Final Expense",
@@ -19,8 +20,17 @@ export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
   medicare_advantage: "Medicare Advantage",
   annuity: "Annuity",
   disability: "Disability",
+  long_term_care: "Long-Term Care",
+  health: "Health",
+  fire: "Fire",
+  legal_shield: "Legal Shield",
+  auto: "Auto",
+  home: "Home",
+  renters: "Renters",
   other: "Other",
 };
+// Non-life / service products — rendered as service badges, not death benefit
+export const SERVICE_PRODUCT_TYPES: Array<Enums["product_type"]> = ["fire", "legal_shield", "auto", "home", "renters"];
 export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
@@ -115,4 +125,37 @@ export function mask(last4: string | null | undefined, len = 9) {
   if (!last4) return "—";
   const dashes = len === 9 ? "XXX-XX-" : "XXXX-XXX-XX-";
   return dashes + last4;
+}
+
+// Legacy free-text policy_type -> canonical product_type enum (read-only compatibility)
+export const LEGACY_POLICY_TYPE_MAP: Record<string, Enums["product_type"]> = {
+  "Life": "life",
+  "Term": "term",
+  "Term Life": "term",
+  "Whole Life": "whole_life",
+  "Final Expense": "final_expense",
+  "Fire": "fire",
+  "Medicare": "medicare_advantage",
+  "Medicare Supplement": "medicare_supplement",
+  "Medicare Advantage": "medicare_advantage",
+  "Legal Shield": "legal_shield",
+  "Health": "health",
+  "Auto": "auto",
+  "Home": "home",
+  "Renters": "renters",
+  "Annuity": "annuity",
+  "Long-Term Care": "long_term_care",
+  "Disability": "disability",
+  "Other": "other",
+};
+
+export function productTypeOf(p: { product_type?: Enums["product_type"] | null; policy_type?: string | null }): Enums["product_type"] | null {
+  if (p.product_type) return p.product_type;
+  if (p.policy_type && LEGACY_POLICY_TYPE_MAP[p.policy_type]) return LEGACY_POLICY_TYPE_MAP[p.policy_type];
+  return null;
+}
+
+export function productLabelOf(p: { product_type?: Enums["product_type"] | null; policy_type?: string | null }): string {
+  const t = productTypeOf(p);
+  return t ? PRODUCT_TYPE_LABEL[t] : (p.policy_type || "—");
 }

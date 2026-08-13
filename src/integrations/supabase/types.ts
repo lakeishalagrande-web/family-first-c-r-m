@@ -898,6 +898,14 @@ export type Database = {
         | "annuity"
         | "disability"
         | "other"
+        | "life"
+        | "fire"
+        | "legal_shield"
+        | "health"
+        | "auto"
+        | "home"
+        | "renters"
+        | "long_term_care"
       rate_class:
         | "preferred_plus"
         | "preferred"
@@ -1077,6 +1085,14 @@ export const Constants = {
         "annuity",
         "disability",
         "other",
+        "life",
+        "fire",
+        "legal_shield",
+        "health",
+        "auto",
+        "home",
+        "renters",
+        "long_term_care",
       ],
       rate_class: [
         "preferred_plus",

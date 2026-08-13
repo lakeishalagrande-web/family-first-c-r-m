@@ -14,9 +14,10 @@ import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
-  POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
+  POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
   BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
+
 import { formatPhone } from "@/components/phone-input";
 import { formatHeight } from "@/components/height-input";
 import type { Database } from "@/integrations/supabase/types";
@@ -76,11 +77,12 @@ function MemberDetail() {
             </p>
             {policies.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
-                {Array.from(new Set(policies.map((p) => p.policy_type).filter(Boolean) as string[])).map((t) => (
+                {Array.from(new Set(policies.map((p) => productLabelOf(p)).filter((t) => t !== "—"))).map((t) => (
                   <Badge key={t} variant="secondary">{t} ✓</Badge>
                 ))}
               </div>
             )}
+
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
             View household
@@ -169,7 +171,7 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{policy.carrier || "—"}</p>
             <span className="text-xs text-muted-foreground">·</span>
-            <span className="text-sm">{policy.policy_type || "—"}</span>
+            <span className="text-sm">{productLabelOf(policy)}</span>
             <Badge variant={policy.status === "active" ? "default" : policy.status === "lapsed" || policy.status === "cancelled" ? "destructive" : "secondary"}>
               {policy.status ? POLICY_STATUS_LABEL[policy.status] : "—"}
             </Badge>
@@ -249,7 +251,7 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
   const [f, setF] = useState({
     carrier: initialIsOther ? "__other__" : initialCarrier,
     customCarrier: initialIsOther ? initialCarrier : "",
-    policy_type: policy?.policy_type ?? "",
+    product_type: (productTypeOf(policy ?? {}) ?? "") as "" | Database["public"]["Enums"]["product_type"],
     policy_number: policy?.policy_number ?? "",
     effective_date: policy?.effective_date ?? "",
     status: (policy?.status ?? "active") as PolicyStatus,
@@ -264,17 +266,21 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const carrierValue = f.carrier === "__other__" ? (f.customCarrier.trim() || null) : (f.carrier || null);
+    if (!carrierValue) return toast.error("Carrier is required");
+    if (!f.product_type) return toast.error("Policy type is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
-    const carrierValue = f.carrier === "__other__" ? (f.customCarrier || null) : (f.carrier || null);
 
     const payload = {
       agent_id: user.id,
       household_id: householdId,
       insured_member_id: memberId,
       carrier: carrierValue,
-      policy_type: f.policy_type || null,
+      product_type: f.product_type,
+      policy_type: PRODUCT_TYPE_LABEL[f.product_type],
+
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
       status: f.status,
@@ -319,10 +325,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 
             <div>
               <Label>Policy type *</Label>
-              <Select value={f.policy_type} onValueChange={(v) => setF({ ...f, policy_type: v })}>
+              <Select value={f.product_type} onValueChange={(v) => setF({ ...f, product_type: v as Database["public"]["Enums"]["product_type"] })}>
                 <SelectTrigger><SelectValue placeholder="Select type…" /></SelectTrigger>
-                <SelectContent>
-                  {POLICY_TYPE_OPTIONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectContent className="max-h-72">
+                  {Object.entries(PRODUCT_TYPE_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+
                 </SelectContent>
               </Select>
             </div>

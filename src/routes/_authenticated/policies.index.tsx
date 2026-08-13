@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, FileText } from "lucide-react";
-import { fmtCurrency, fmtDate, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { fmtCurrency, fmtDate, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/policies/")({
   head: () => ({ meta: [{ title: "Policies — AgentLifeline" }] }),
@@ -63,7 +63,7 @@ function PoliciesList() {
                     <Badge variant={p.status === "active" ? "default" : p.status === "lapsed" ? "destructive" : "secondary"}>{p.status ? POLICY_STATUS_LABEL[p.status] : "—"}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {(p.households as { household_name?: string } | null)?.household_name || "—"} · {p.product_type ? PRODUCT_TYPE_LABEL[p.product_type] : "—"} · Face {fmtCurrency(Number(p.face_amount))} · {fmtCurrency(Number(p.monthly_premium))}/mo
+                    {(p.households as { household_name?: string } | null)?.household_name || "—"} · {productLabelOf(p)} · Face {fmtCurrency(Number(p.face_amount))} · {fmtCurrency(Number(p.monthly_premium))}/mo
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground hidden md:block">{fmtDate(p.issue_date)}</p>

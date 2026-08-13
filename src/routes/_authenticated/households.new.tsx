@@ -65,7 +65,7 @@ function NewHousehold() {
       email: form.primary_contact_email || null,
       phone_mobile: form.primary_contact_phone || null,
       is_primary: true,
-      relationship: "Head of Household",
+      relationship: "Self",
     });
     setLoading(false);
     if (memberErr) toast.error("Household saved but primary contact record failed: " + memberErr.message);

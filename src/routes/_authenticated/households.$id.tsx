@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, FileText, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 import { PhoneInput, formatPhone } from "@/components/phone-input";
 import { HeightInput, formatHeight } from "@/components/height-input";
@@ -96,7 +96,7 @@ function HouseholdDetail() {
           {members.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No family members yet. Add the primary insured to begin.</CardContent></Card>}
           <div className="grid gap-3 md:grid-cols-2">
             {members.map((m) => (
-              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} policyTypes={Array.from(new Set(policies.filter((p) => p.insured_member_id === m.id).map((p) => p.policy_type).filter(Boolean) as string[]))} />
+              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} policyTypes={Array.from(new Set(policies.filter((p) => p.insured_member_id === m.id).map((p) => productLabelOf(p)).filter((t) => t !== "—")))} />
             ))}
           </div>
         </TabsContent>
@@ -122,7 +122,7 @@ function HouseholdDetail() {
                           <Badge variant={p.status === "active" ? "default" : p.status === "lapsed" ? "destructive" : "secondary"}>{p.status ? POLICY_STATUS_LABEL[p.status] : "—"}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {p.product_type ? PRODUCT_TYPE_LABEL[p.product_type] : "—"} · Insured: {insured ? `${insured.first_name} ${insured.last_name}` : "—"} · Face {fmtCurrency(Number(p.face_amount))} · Premium {fmtCurrency(Number(p.monthly_premium))}/mo
+                          {productLabelOf(p)} · Insured: {insured ? `${insured.first_name} ${insured.last_name}` : "—"} · Face {fmtCurrency(Number(p.face_amount))} · Premium {fmtCurrency(Number(p.monthly_premium))}/mo
                         </p>
                       </div>
                     </CardContent>
@@ -260,9 +260,10 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!f.relationship) return toast.error("Relationship is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
 
     const cleanedMeds = meds.filter((m) => m.name && m.name.trim());
     const payload = {
