@@ -14,9 +14,10 @@ import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
-  POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, POLICY_TYPE_OPTIONS,
+  POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
   BENEFICIARY_RELATIONSHIP_OPTIONS,
 } from "@/lib/labels";
+
 import { formatPhone } from "@/components/phone-input";
 import { formatHeight } from "@/components/height-input";
 import type { Database } from "@/integrations/supabase/types";
