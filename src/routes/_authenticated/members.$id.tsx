@@ -325,10 +325,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 
             <div>
               <Label>Policy type *</Label>
-              <Select value={f.policy_type} onValueChange={(v) => setF({ ...f, policy_type: v })}>
+              <Select value={f.product_type} onValueChange={(v) => setF({ ...f, product_type: v as Database["public"]["Enums"]["product_type"] })}>
                 <SelectTrigger><SelectValue placeholder="Select type…" /></SelectTrigger>
-                <SelectContent>
-                  {POLICY_TYPE_OPTIONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectContent className="max-h-72">
+                  {Object.entries(PRODUCT_TYPE_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+
                 </SelectContent>
               </Select>
             </div>
