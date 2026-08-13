@@ -171,7 +171,7 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{policy.carrier || "—"}</p>
             <span className="text-xs text-muted-foreground">·</span>
-            <span className="text-sm">{policy.policy_type || "—"}</span>
+            <span className="text-sm">{productLabelOf(policy)}</span>
             <Badge variant={policy.status === "active" ? "default" : policy.status === "lapsed" || policy.status === "cancelled" ? "destructive" : "secondary"}>
               {policy.status ? POLICY_STATUS_LABEL[policy.status] : "—"}
             </Badge>
