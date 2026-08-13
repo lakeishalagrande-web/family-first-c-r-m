@@ -12,6 +12,7 @@ export type Alert = Tables["alerts"]["Row"];
 export type Profile = Tables["profiles"]["Row"];
 
 export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
+  life: "Life",
   term: "Term Life",
   whole_life: "Whole Life",
   final_expense: "Final Expense",
@@ -19,8 +20,17 @@ export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
   medicare_advantage: "Medicare Advantage",
   annuity: "Annuity",
   disability: "Disability",
+  long_term_care: "Long-Term Care",
+  health: "Health",
+  fire: "Fire",
+  legal_shield: "Legal Shield",
+  auto: "Auto",
+  home: "Home",
+  renters: "Renters",
   other: "Other",
 };
+// Non-life / service products — rendered as service badges, not death benefit
+export const SERVICE_PRODUCT_TYPES: Array<Enums["product_type"]> = ["fire", "legal_shield", "auto", "home", "renters"];
 export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
