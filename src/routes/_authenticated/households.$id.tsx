@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, FileText, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 import { PhoneInput, formatPhone } from "@/components/phone-input";
 import { HeightInput, formatHeight } from "@/components/height-input";
@@ -122,7 +122,7 @@ function HouseholdDetail() {
                           <Badge variant={p.status === "active" ? "default" : p.status === "lapsed" ? "destructive" : "secondary"}>{p.status ? POLICY_STATUS_LABEL[p.status] : "—"}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {p.product_type ? PRODUCT_TYPE_LABEL[p.product_type] : "—"} · Insured: {insured ? `${insured.first_name} ${insured.last_name}` : "—"} · Face {fmtCurrency(Number(p.face_amount))} · Premium {fmtCurrency(Number(p.monthly_premium))}/mo
+                          {productLabelOf(p)} · Insured: {insured ? `${insured.first_name} ${insured.last_name}` : "—"} · Face {fmtCurrency(Number(p.face_amount))} · Premium {fmtCurrency(Number(p.monthly_premium))}/mo
                         </p>
                       </div>
                     </CardContent>
