@@ -266,17 +266,21 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const carrierValue = f.carrier === "__other__" ? (f.customCarrier.trim() || null) : (f.carrier || null);
+    if (!carrierValue) return toast.error("Carrier is required");
+    if (!f.product_type) return toast.error("Policy type is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
-    const carrierValue = f.carrier === "__other__" ? (f.customCarrier || null) : (f.carrier || null);
 
     const payload = {
       agent_id: user.id,
       household_id: householdId,
       insured_member_id: memberId,
       carrier: carrierValue,
-      policy_type: f.policy_type || null,
+      product_type: f.product_type,
+      policy_type: PRODUCT_TYPE_LABEL[f.product_type],
+
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
       status: f.status,
