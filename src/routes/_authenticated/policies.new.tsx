@@ -57,14 +57,19 @@ function NewPolicy() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!householdId) return toast.error("Pick a household");
+    const carrierValue = f.carrier === "__other__" ? (f.custom_carrier.trim() || null) : (f.carrier || null);
+    if (!carrierValue) return toast.error("Carrier is required");
+    if (!f.product_type) return toast.error("Product type is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
     const { data, error } = await supabase.from("policies").insert({
       agent_id: user.id, household_id: householdId,
       insured_member_id: f.insured_member_id || null,
-      policy_number: f.policy_number || null, carrier: (f.carrier === "__other__" ? (f.custom_carrier || null) : (f.carrier || null)),
-      product_type: (f.product_type || null) as never,
+      policy_number: f.policy_number || null, carrier: carrierValue,
+      product_type: f.product_type as never,
+      policy_type: PRODUCT_TYPE_LABEL[f.product_type as keyof typeof PRODUCT_TYPE_LABEL],
+
       owner_name: f.owner_name || null, owner_type: (f.owner_type || null) as never,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
