@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, FileText } from "lucide-react";
-import { fmtCurrency, fmtDate, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { fmtCurrency, fmtDate, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/policies/")({
   head: () => ({ meta: [{ title: "Policies — AgentLifeline" }] }),
