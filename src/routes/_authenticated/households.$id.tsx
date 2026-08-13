@@ -96,7 +96,7 @@ function HouseholdDetail() {
           {members.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No family members yet. Add the primary insured to begin.</CardContent></Card>}
           <div className="grid gap-3 md:grid-cols-2">
             {members.map((m) => (
-              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} policyTypes={Array.from(new Set(policies.filter((p) => p.insured_member_id === m.id).map((p) => p.policy_type).filter(Boolean) as string[]))} />
+              <MemberCard key={m.id} member={m} onChange={() => qc.invalidateQueries({ queryKey: ["household", id] })} householdId={id} policyTypes={Array.from(new Set(policies.filter((p) => p.insured_member_id === m.id).map((p) => productLabelOf(p)).filter((t) => t !== "—")))} />
             ))}
           </div>
         </TabsContent>
@@ -260,9 +260,10 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!f.relationship) return toast.error("Relationship is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
 
     const cleanedMeds = meds.filter((m) => m.name && m.name.trim());
     const payload = {
