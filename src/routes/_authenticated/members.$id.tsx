@@ -251,7 +251,7 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
   const [f, setF] = useState({
     carrier: initialIsOther ? "__other__" : initialCarrier,
     customCarrier: initialIsOther ? initialCarrier : "",
-    policy_type: policy?.policy_type ?? "",
+    product_type: (productTypeOf(policy ?? {}) ?? "") as "" | Database["public"]["Enums"]["product_type"],
     policy_number: policy?.policy_number ?? "",
     effective_date: policy?.effective_date ?? "",
     status: (policy?.status ?? "active") as PolicyStatus,
