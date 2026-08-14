@@ -27,10 +27,17 @@ export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
   auto: "Auto",
   home: "Home",
   renters: "Renters",
+  accidental_death: "Accidental Death",
   other: "Other",
 };
 // Non-life / service products — rendered as service badges, not death benefit
 export const SERVICE_PRODUCT_TYPES: Array<Enums["product_type"]> = ["fire", "legal_shield", "auto", "home", "renters"];
+// Accident-only coverage — must never be presented as traditional life insurance
+export const ACCIDENT_ONLY_PRODUCT_TYPES: Array<Enums["product_type"]> = ["accidental_death"];
+export function isAccidentOnly(p: { product_type?: Enums["product_type"] | null; policy_type?: string | null }) {
+  const t = productTypeOf(p);
+  return !!t && ACCIDENT_ONLY_PRODUCT_TYPES.includes(t);
+}
 export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
