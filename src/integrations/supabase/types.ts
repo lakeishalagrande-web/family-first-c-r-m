@@ -855,6 +855,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      owns_household: { Args: { _household_id: string }; Returns: boolean }
+      owns_policy: { Args: { _policy_id: string }; Returns: boolean }
     }
     Enums: {
       account_status: "active" | "suspended"
