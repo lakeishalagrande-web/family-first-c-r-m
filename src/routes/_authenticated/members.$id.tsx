@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
-  BENEFICIARY_RELATIONSHIP_OPTIONS,
+  BENEFICIARY_RELATIONSHIP_OPTIONS, mask,
 } from "@/lib/labels";
 
 import { formatPhone } from "@/components/phone-input";
@@ -46,7 +46,7 @@ function MemberDetail() {
       const { data: member } = await supabase.from("family_members").select("*").eq("id", id).maybeSingle();
       if (!member) return { member: null, policies: [], carriers: [] };
       const [{ data: policies }, { data: carriers }] = await Promise.all([
-        supabase.from("policies").select("*, beneficiaries(*)").eq("insured_member_id", id).order("created_at", { ascending: false }),
+        supabase.from("policies").select("*, beneficiaries(*, person:member_id(id, first_name, last_name, date_of_birth, phone_mobile, ssn_last4))").eq("insured_member_id", id).order("created_at", { ascending: false }),
         supabase.from("carriers").select("*").order("name"),
       ]);
       return { member, policies: policies ?? [], carriers: carriers ?? [] };
@@ -142,8 +142,10 @@ function MemberDetail() {
 }
 
 // ---------------- Policy row ----------------
+type LinkedPerson = { id: string; first_name: string; last_name: string; date_of_birth: string | null; phone_mobile: string | null; ssn_last4: string | null } | null;
+type BeneficiaryWithPerson = Database["public"]["Tables"]["beneficiaries"]["Row"] & { person?: LinkedPerson };
 type PolicyWithBens = Database["public"]["Tables"]["policies"]["Row"] & {
-  beneficiaries: Database["public"]["Tables"]["beneficiaries"]["Row"][];
+  beneficiaries: BeneficiaryWithPerson[];
 };
 type Carrier = Database["public"]["Tables"]["carriers"]["Row"];
 
@@ -216,12 +218,8 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
             <p className="text-[10px] font-semibold uppercase text-muted-foreground">{label as string}</p>
             <div className="space-y-1">
               {(list as typeof bens).map((b) => (
-                <div key={b.id} className="flex items-center justify-between text-xs bg-muted/30 rounded px-2 py-1">
-                  <span>
-                    <strong>{b.full_name}</strong>
-                    {b.relationship && ` · ${b.relationship}`}
-                    {b.percentage != null && ` · ${b.percentage}%`}
-                  </span>
+                <div key={b.id} className="flex items-start justify-between text-xs bg-muted/30 rounded px-2 py-1">
+                  <BeneficiaryLine b={b} />
                   <div className="flex gap-1">
                     <BeneficiaryDialog policyId={policy.id} beneficiary={b} onSaved={onChange}
                       trigger={<Button variant="ghost" size="icon" className="h-6 w-6"><Edit2 className="h-3 w-3" /></Button>} />
@@ -589,5 +587,49 @@ function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---------------- Beneficiary display line ----------------
+function BeneficiaryLine({ b }: { b: BeneficiaryWithPerson }) {
+  const reveal = useServerFn(revealPII);
+  const [shown, setShown] = useState<string | null>(null);
+  const person = b.person ?? null;
+  const dob = person?.date_of_birth ?? b.date_of_birth;
+  const phone = person?.phone_mobile ?? b.phone;
+  const last4 = person?.ssn_last4 ?? b.ssn_last4;
+
+  async function doReveal() {
+    if (shown) return setShown(null);
+    try {
+      const r = await reveal({
+        data: person
+          ? { recordType: "family_member" as const, recordId: person.id, field: "ssn" as const }
+          : { recordType: "beneficiary" as const, recordId: b.id, field: "ssn" as const },
+      });
+      setShown(r.value || "—");
+      toast.success("Access logged");
+    } catch (e) { toast.error((e as Error).message); }
+  }
+
+  return (
+    <span className="min-w-0">
+      <strong>{person ? `${person.first_name} ${person.last_name}` : b.full_name}</strong>
+      {b.relationship && ` · ${b.relationship}`}
+      {b.percentage != null && ` · ${b.percentage}%`}
+      {person && <span className="ml-1 text-[10px] uppercase tracking-wider text-gold">linked</span>}
+      <span className="block text-muted-foreground">
+        {[dob ? `DOB ${fmtDate(dob)}` : null, phone ? formatPhone(phone) : null].filter(Boolean).join(" · ")}
+        {last4 && (
+          <>
+            {(dob || phone) && " · "}
+            SSN <span className="font-mono">{shown || mask(last4)}</span>{" "}
+            <button type="button" onClick={doReveal} className="text-primary hover:underline inline-flex items-center gap-0.5">
+              {shown ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{shown ? "Hide" : "Reveal"}
+            </button>
+          </>
+        )}
+      </span>
+    </span>
   );
 }
