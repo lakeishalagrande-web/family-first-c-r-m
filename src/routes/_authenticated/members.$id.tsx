@@ -9,7 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users } from "lucide-react";
+import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users, Search, Eye, EyeOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
+import { usePersonSearch, personSummary, type PersonHit } from "@/components/person-search";
+import { PhoneInput } from "@/components/phone-input";
 import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
