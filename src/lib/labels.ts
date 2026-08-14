@@ -58,6 +58,15 @@ export const BENEFICIARY_RELATIONSHIP_OPTIONS = [
   "Spouse", "Child", "Mother", "Father", "Grandmother", "Grandfather", "Sibling", "Trust", "Other",
 ] as const;
 
+export const MARITAL_STATUS_OPTIONS = [
+  "Single", "Married", "Divorced", "Widowed", "Separated", "Engaged", "Domestic Partner", "Other", "Unknown",
+] as const;
+
+export const LEAD_SOURCE_OPTIONS = [
+  "Existing Client", "Referral", "Workshop", "Wealth Building Wednesday", "Community Event",
+  "Mosque", "Church", "Social Media", "Website", "Other",
+] as const;
+
 export const QUOTE_STATUS_OPTIONS = ["Quoted", "Presented", "Accepted", "Declined"] as const;
 export type QuoteStatus = (typeof QUOTE_STATUS_OPTIONS)[number];
 
