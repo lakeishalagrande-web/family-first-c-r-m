@@ -82,11 +82,23 @@ export const DISMISS_REASON_OPTIONS = [
 ] as const;
 
 export const PAYMENT_STRUCTURE_LABEL: Record<Enums["payment_structure"], string> = {
+  continuous_pay: "Continuous Pay",
   ten_pay: "10-Pay",
   twenty_pay: "20-Pay",
   pay_to_65: "Pay to Age 65",
+  paid_to_age: "Paid to Age …",
   whole_life_lifetime: "Whole Life (Lifetime Pay)",
-  single_premium: "Single Premium",
+  single_premium: "Single Pay",
+};
+// Term policy design (level vs return-of-premium)
+export const TERM_DESIGN_LABEL: Record<Enums["term_design"], string> = {
+  level_term: "Level Term",
+  rop_term: "ROP Term",
+};
+export const RIDER_TYPE_LABEL: Record<Enums["rider_type"], string> = {
+  child: "Child Rider",
+  spouse: "Spouse Rider",
+  other_insured: "Other Insured Rider",
 };
 export const RATE_CLASS_LABEL: Record<Enums["rate_class"], string> = {
   preferred_plus: "Preferred Plus",
@@ -114,6 +126,7 @@ export const ALERT_TYPE_LABEL: Record<Enums["alert_type"], string> = {
   client_birthday: "Client Birthday",
   beneficiary_birthday: "Beneficiary Birthday",
   follow_up: "Follow-up Due",
+  rider_termination: "Rider Termination Approaching",
 };
 
 export function fmtCurrency(n: number | null | undefined) {
