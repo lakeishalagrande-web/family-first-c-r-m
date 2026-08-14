@@ -128,10 +128,13 @@ export type Database = {
           full_name: string
           id: string
           mailing_address: string | null
+          member_id: string | null
           percentage: number | null
           phone: string | null
           policy_id: string
           relationship: string | null
+          ssn_encrypted: string | null
+          ssn_last4: string | null
         }
         Insert: {
           agent_id: string
@@ -141,10 +144,13 @@ export type Database = {
           full_name: string
           id?: string
           mailing_address?: string | null
+          member_id?: string | null
           percentage?: number | null
           phone?: string | null
           policy_id: string
           relationship?: string | null
+          ssn_encrypted?: string | null
+          ssn_last4?: string | null
         }
         Update: {
           agent_id?: string
@@ -154,12 +160,22 @@ export type Database = {
           full_name?: string
           id?: string
           mailing_address?: string | null
+          member_id?: string | null
           percentage?: number | null
           phone?: string | null
           policy_id?: string
           relationship?: string | null
+          ssn_encrypted?: string | null
+          ssn_last4?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "beneficiaries_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "beneficiaries_policy_id_fkey"
             columns: ["policy_id"]
@@ -253,6 +269,7 @@ export type Database = {
           doctor_name: string | null
           doctor_phone: string | null
           email: string | null
+          first_met_date: string | null
           first_name: string
           gender: string | null
           has_disability: boolean | null
@@ -262,6 +279,8 @@ export type Database = {
           is_primary: boolean | null
           last_doctor_visit: string | null
           last_name: string
+          lead_source: string | null
+          marital_status: string | null
           medicare_encrypted: string | null
           medicare_last4: string | null
           medications: Json
@@ -269,8 +288,10 @@ export type Database = {
           occupation: string | null
           phone_home: string | null
           phone_mobile: string | null
+          referred_by: string | null
           relationship: string | null
           smoker: boolean | null
+          source_detail: string | null
           ssn_encrypted: string | null
           ssn_last4: string | null
           updated_at: string
@@ -285,6 +306,7 @@ export type Database = {
           doctor_name?: string | null
           doctor_phone?: string | null
           email?: string | null
+          first_met_date?: string | null
           first_name: string
           gender?: string | null
           has_disability?: boolean | null
@@ -294,6 +316,8 @@ export type Database = {
           is_primary?: boolean | null
           last_doctor_visit?: string | null
           last_name: string
+          lead_source?: string | null
+          marital_status?: string | null
           medicare_encrypted?: string | null
           medicare_last4?: string | null
           medications?: Json
@@ -301,8 +325,10 @@ export type Database = {
           occupation?: string | null
           phone_home?: string | null
           phone_mobile?: string | null
+          referred_by?: string | null
           relationship?: string | null
           smoker?: boolean | null
+          source_detail?: string | null
           ssn_encrypted?: string | null
           ssn_last4?: string | null
           updated_at?: string
@@ -317,6 +343,7 @@ export type Database = {
           doctor_name?: string | null
           doctor_phone?: string | null
           email?: string | null
+          first_met_date?: string | null
           first_name?: string
           gender?: string | null
           has_disability?: boolean | null
@@ -326,6 +353,8 @@ export type Database = {
           is_primary?: boolean | null
           last_doctor_visit?: string | null
           last_name?: string
+          lead_source?: string | null
+          marital_status?: string | null
           medicare_encrypted?: string | null
           medicare_last4?: string | null
           medications?: Json
@@ -333,8 +362,10 @@ export type Database = {
           occupation?: string | null
           phone_home?: string | null
           phone_mobile?: string | null
+          referred_by?: string | null
           relationship?: string | null
           smoker?: boolean | null
+          source_detail?: string | null
           ssn_encrypted?: string | null
           ssn_last4?: string | null
           updated_at?: string
