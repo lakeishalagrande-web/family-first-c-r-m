@@ -269,6 +269,7 @@ export type Database = {
           doctor_name: string | null
           doctor_phone: string | null
           email: string | null
+          employer_name: string | null
           first_met_date: string | null
           first_name: string
           gender: string | null
@@ -288,6 +289,7 @@ export type Database = {
           occupation: string | null
           phone_home: string | null
           phone_mobile: string | null
+          place_of_birth: string | null
           referred_by: string | null
           relationship: string | null
           smoker: boolean | null
@@ -295,6 +297,7 @@ export type Database = {
           ssn_encrypted: string | null
           ssn_last4: string | null
           updated_at: string
+          us_citizen: string | null
           weight_lbs: number | null
         }
         Insert: {
@@ -306,6 +309,7 @@ export type Database = {
           doctor_name?: string | null
           doctor_phone?: string | null
           email?: string | null
+          employer_name?: string | null
           first_met_date?: string | null
           first_name: string
           gender?: string | null
@@ -325,6 +329,7 @@ export type Database = {
           occupation?: string | null
           phone_home?: string | null
           phone_mobile?: string | null
+          place_of_birth?: string | null
           referred_by?: string | null
           relationship?: string | null
           smoker?: boolean | null
@@ -332,6 +337,7 @@ export type Database = {
           ssn_encrypted?: string | null
           ssn_last4?: string | null
           updated_at?: string
+          us_citizen?: string | null
           weight_lbs?: number | null
         }
         Update: {
@@ -343,6 +349,7 @@ export type Database = {
           doctor_name?: string | null
           doctor_phone?: string | null
           email?: string | null
+          employer_name?: string | null
           first_met_date?: string | null
           first_name?: string
           gender?: string | null
@@ -362,6 +369,7 @@ export type Database = {
           occupation?: string | null
           phone_home?: string | null
           phone_mobile?: string | null
+          place_of_birth?: string | null
           referred_by?: string | null
           relationship?: string | null
           smoker?: boolean | null
@@ -369,6 +377,7 @@ export type Database = {
           ssn_encrypted?: string | null
           ssn_last4?: string | null
           updated_at?: string
+          us_citizen?: string | null
           weight_lbs?: number | null
         }
         Relationships: [
@@ -573,6 +582,7 @@ export type Database = {
           notes: string | null
           owner_name: string | null
           owner_type: Database["public"]["Enums"]["owner_type"] | null
+          pay_to_age: number | null
           payment_structure:
             | Database["public"]["Enums"]["payment_structure"]
             | null
@@ -584,6 +594,8 @@ export type Database = {
           rate_class: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline: string | null
           status: Database["public"]["Enums"]["policy_status"] | null
+          term_design: Database["public"]["Enums"]["term_design"] | null
+          term_length_years: number | null
           updated_at: string
         }
         Insert: {
@@ -609,6 +621,7 @@ export type Database = {
           notes?: string | null
           owner_name?: string | null
           owner_type?: Database["public"]["Enums"]["owner_type"] | null
+          pay_to_age?: number | null
           payment_structure?:
             | Database["public"]["Enums"]["payment_structure"]
             | null
@@ -620,6 +633,8 @@ export type Database = {
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
           status?: Database["public"]["Enums"]["policy_status"] | null
+          term_design?: Database["public"]["Enums"]["term_design"] | null
+          term_length_years?: number | null
           updated_at?: string
         }
         Update: {
@@ -645,6 +660,7 @@ export type Database = {
           notes?: string | null
           owner_name?: string | null
           owner_type?: Database["public"]["Enums"]["owner_type"] | null
+          pay_to_age?: number | null
           payment_structure?:
             | Database["public"]["Enums"]["payment_structure"]
             | null
@@ -656,6 +672,8 @@ export type Database = {
           rate_class?: Database["public"]["Enums"]["rate_class"] | null
           reinstatement_deadline?: string | null
           status?: Database["public"]["Enums"]["policy_status"] | null
+          term_design?: Database["public"]["Enums"]["term_design"] | null
+          term_length_years?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -804,45 +822,79 @@ export type Database = {
           agent_id: string
           beneficiary: string | null
           child_name: string
+          conversion_eligible: boolean | null
+          conversion_notes: string | null
+          coverage_amount: number | null
+          covered_member_id: string | null
           created_at: string
           date_of_birth: string | null
+          effective_date: string | null
           height_inches: number | null
           id: string
           policy_id: string
+          rider_type: Database["public"]["Enums"]["rider_type"]
           sex: string | null
           ssn_encrypted: string | null
           ssn_last4: string | null
+          termination_age: number | null
+          termination_date: string | null
+          updated_at: string
           weight_lbs: number | null
         }
         Insert: {
           agent_id: string
           beneficiary?: string | null
           child_name: string
+          conversion_eligible?: boolean | null
+          conversion_notes?: string | null
+          coverage_amount?: number | null
+          covered_member_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          effective_date?: string | null
           height_inches?: number | null
           id?: string
           policy_id: string
+          rider_type?: Database["public"]["Enums"]["rider_type"]
           sex?: string | null
           ssn_encrypted?: string | null
           ssn_last4?: string | null
+          termination_age?: number | null
+          termination_date?: string | null
+          updated_at?: string
           weight_lbs?: number | null
         }
         Update: {
           agent_id?: string
           beneficiary?: string | null
           child_name?: string
+          conversion_eligible?: boolean | null
+          conversion_notes?: string | null
+          coverage_amount?: number | null
+          covered_member_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          effective_date?: string | null
           height_inches?: number | null
           id?: string
           policy_id?: string
+          rider_type?: Database["public"]["Enums"]["rider_type"]
           sex?: string | null
           ssn_encrypted?: string | null
           ssn_last4?: string | null
+          termination_age?: number | null
+          termination_date?: string | null
+          updated_at?: string
           weight_lbs?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "term_riders_covered_member_id_fkey"
+            columns: ["covered_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "term_riders_policy_id_fkey"
             columns: ["policy_id"]
@@ -897,6 +949,7 @@ export type Database = {
         | "client_birthday"
         | "beneficiary_birthday"
         | "follow_up"
+        | "rider_termination"
       app_role: "admin" | "agent"
       beneficiary_type: "primary" | "contingent"
       contact_method: "phone" | "email" | "text" | "in_person" | "mail"
@@ -913,6 +966,8 @@ export type Database = {
         | "pay_to_65"
         | "whole_life_lifetime"
         | "single_premium"
+        | "continuous_pay"
+        | "paid_to_age"
       policy_status:
         | "active"
         | "lapsed"
@@ -939,13 +994,16 @@ export type Database = {
         | "home"
         | "renters"
         | "long_term_care"
+        | "accidental_death"
       rate_class:
         | "preferred_plus"
         | "preferred"
         | "standard"
         | "graded_benefit"
         | "guaranteed_issue"
+      rider_type: "child" | "spouse" | "other_insured"
       subscription_tier: "starter" | "professional" | "agency"
+      term_design: "level_term" | "rop_term"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1080,6 +1138,7 @@ export const Constants = {
         "client_birthday",
         "beneficiary_birthday",
         "follow_up",
+        "rider_termination",
       ],
       app_role: ["admin", "agent"],
       beneficiary_type: ["primary", "contingent"],
@@ -1098,6 +1157,8 @@ export const Constants = {
         "pay_to_65",
         "whole_life_lifetime",
         "single_premium",
+        "continuous_pay",
+        "paid_to_age",
       ],
       policy_status: [
         "active",
@@ -1126,6 +1187,7 @@ export const Constants = {
         "home",
         "renters",
         "long_term_care",
+        "accidental_death",
       ],
       rate_class: [
         "preferred_plus",
@@ -1134,7 +1196,9 @@ export const Constants = {
         "graded_benefit",
         "guaranteed_issue",
       ],
+      rider_type: ["child", "spouse", "other_insured"],
       subscription_tier: ["starter", "professional", "agency"],
+      term_design: ["level_term", "rop_term"],
     },
   },
 } as const

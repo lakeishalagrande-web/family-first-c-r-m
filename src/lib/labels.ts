@@ -27,10 +27,17 @@ export const PRODUCT_TYPE_LABEL: Record<Enums["product_type"], string> = {
   auto: "Auto",
   home: "Home",
   renters: "Renters",
+  accidental_death: "Accidental Death",
   other: "Other",
 };
 // Non-life / service products — rendered as service badges, not death benefit
 export const SERVICE_PRODUCT_TYPES: Array<Enums["product_type"]> = ["fire", "legal_shield", "auto", "home", "renters"];
+// Accident-only coverage — must never be presented as traditional life insurance
+export const ACCIDENT_ONLY_PRODUCT_TYPES: Array<Enums["product_type"]> = ["accidental_death"];
+export function isAccidentOnly(p: { product_type?: Enums["product_type"] | null; policy_type?: string | null }) {
+  const t = productTypeOf(p);
+  return !!t && ACCIDENT_ONLY_PRODUCT_TYPES.includes(t);
+}
 export const POLICY_STATUS_LABEL: Record<Enums["policy_status"], string> = {
   active: "Active",
   lapsed: "Lapsed",
@@ -75,11 +82,23 @@ export const DISMISS_REASON_OPTIONS = [
 ] as const;
 
 export const PAYMENT_STRUCTURE_LABEL: Record<Enums["payment_structure"], string> = {
+  continuous_pay: "Continuous Pay",
   ten_pay: "10-Pay",
   twenty_pay: "20-Pay",
   pay_to_65: "Pay to Age 65",
+  paid_to_age: "Paid to Age …",
   whole_life_lifetime: "Whole Life (Lifetime Pay)",
-  single_premium: "Single Premium",
+  single_premium: "Single Pay",
+};
+// Term policy design (level vs return-of-premium)
+export const TERM_DESIGN_LABEL: Record<Enums["term_design"], string> = {
+  level_term: "Level Term",
+  rop_term: "ROP Term",
+};
+export const RIDER_TYPE_LABEL: Record<Enums["rider_type"], string> = {
+  child: "Child Rider",
+  spouse: "Spouse Rider",
+  other_insured: "Other Insured Rider",
 };
 export const RATE_CLASS_LABEL: Record<Enums["rate_class"], string> = {
   preferred_plus: "Preferred Plus",
@@ -107,6 +126,7 @@ export const ALERT_TYPE_LABEL: Record<Enums["alert_type"], string> = {
   client_birthday: "Client Birthday",
   beneficiary_birthday: "Beneficiary Birthday",
   follow_up: "Follow-up Due",
+  rider_termination: "Rider Termination Approaching",
 };
 
 export function fmtCurrency(n: number | null | undefined) {
@@ -167,4 +187,35 @@ export function productTypeOf(p: { product_type?: Enums["product_type"] | null; 
 export function productLabelOf(p: { product_type?: Enums["product_type"] | null; policy_type?: string | null }): string {
   const t = productTypeOf(p);
   return t ? PRODUCT_TYPE_LABEL[t] : (p.policy_type || "—");
+}
+
+// ---- Policy design summary --------------------------------------------------
+// Builds a human summary like "Whole Life — 20-Pay", "ROP Term — 30 Year",
+// "Whole Life — Paid to Age 65", "Accidental Death (accident-only)".
+export function paymentDesignLabel(p: {
+  payment_structure?: Enums["payment_structure"] | null;
+  pay_to_age?: number | null;
+}): string | null {
+  const ps = p.payment_structure;
+  if (!ps) return null;
+  if (ps === "paid_to_age") return p.pay_to_age ? `Paid to Age ${p.pay_to_age}` : "Paid to Age …";
+  return PAYMENT_STRUCTURE_LABEL[ps];
+}
+
+export function policyDesignSummary(p: {
+  product_type?: Enums["product_type"] | null;
+  policy_type?: string | null;
+  term_design?: Enums["term_design"] | null;
+  term_length_years?: number | null;
+  payment_structure?: Enums["payment_structure"] | null;
+  pay_to_age?: number | null;
+}): string {
+  const t = productTypeOf(p);
+  const isTerm = t === "term";
+  const base = isTerm && p.term_design ? TERM_DESIGN_LABEL[p.term_design] : productLabelOf(p);
+  const parts: string[] = [];
+  if (isTerm && p.term_length_years) parts.push(`${p.term_length_years} Year`);
+  const pay = paymentDesignLabel(p);
+  if (pay) parts.push(pay);
+  return parts.length ? `${base} — ${parts.join(" · ")}` : base;
 }
