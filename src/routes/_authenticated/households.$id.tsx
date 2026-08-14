@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, FileText, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf } from "@/lib/labels";
+import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf, MARITAL_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 import { PhoneInput, formatPhone } from "@/components/phone-input";
 import { HeightInput, formatHeight } from "@/components/height-input";
@@ -252,6 +252,11 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
     doctor_name: (initial as { doctor_name?: string }).doctor_name ?? "",
     doctor_phone: (initial as { doctor_phone?: string }).doctor_phone ?? "",
     last_doctor_visit: (initial as { last_doctor_visit?: string }).last_doctor_visit ?? "",
+    marital_status: (initial as { marital_status?: string }).marital_status ?? "",
+    lead_source: (initial as { lead_source?: string }).lead_source ?? "",
+    source_detail: (initial as { source_detail?: string }).source_detail ?? "",
+    referred_by: (initial as { referred_by?: string }).referred_by ?? "",
+    first_met_date: (initial as { first_met_date?: string }).first_met_date ?? "",
     ssn: "",
     medicare: "",
   });
@@ -287,6 +292,11 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
       doctor_name: f.doctor_name || null,
       doctor_phone: f.doctor_phone || null,
       last_doctor_visit: f.last_doctor_visit || null,
+      marital_status: f.marital_status || null,
+      lead_source: f.lead_source || null,
+      source_detail: f.source_detail || null,
+      referred_by: f.referred_by || null,
+      first_met_date: f.first_met_date || null,
       medications: cleanedMeds,
     };
 
@@ -359,7 +369,16 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
             <div><Label>Weight (lbs)</Label><Input type="number" value={f.weight_lbs} onChange={(e) => setF({ ...f, weight_lbs: e.target.value })} /></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Marital status</Label>
+              <Select value={f.marital_status} onValueChange={(v) => setF({ ...f, marital_status: v })}>
+                <SelectTrigger><SelectValue placeholder="— optional —" /></SelectTrigger>
+                <SelectContent>
+                  {MARITAL_STATUS_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>Occupation</Label><Input value={f.occupation} onChange={(e) => setF({ ...f, occupation: e.target.value })} /></div>
             <div><Label>Annual income</Label><Input type="number" value={f.annual_income} onChange={(e) => setF({ ...f, annual_income: e.target.value })} /></div>
           </div>
@@ -367,6 +386,26 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
             <div><Label>Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
             <div><Label>Mobile</Label><PhoneInput value={f.phone_mobile} onChange={(v) => setF({ ...f, phone_mobile: v })} /></div>
             <div><Label>Home phone</Label><PhoneInput value={f.phone_home} onChange={(v) => setF({ ...f, phone_home: v })} /></div>
+          </div>
+
+          <div className="rounded-md border p-3 space-y-3">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Lead / relationship source</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lead / relationship source</Label>
+                <Select value={f.lead_source} onValueChange={(v) => setF({ ...f, lead_source: v })}>
+                  <SelectTrigger><SelectValue placeholder="— optional —" /></SelectTrigger>
+                  <SelectContent>
+                    {LEAD_SOURCE_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Date first met</Label><Input type="date" value={f.first_met_date} onChange={(e) => setF({ ...f, first_met_date: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Where we met / source detail</Label><Input value={f.source_detail} onChange={(e) => setF({ ...f, source_detail: e.target.value })} placeholder="Wealth Building Wednesday, Sept 2025" /></div>
+              <div><Label>Referred by</Label><Input value={f.referred_by} onChange={(e) => setF({ ...f, referred_by: e.target.value })} /></div>
+            </div>
           </div>
 
           <div className="rounded-md border border-gold/30 bg-gold/5 p-3 space-y-3">
