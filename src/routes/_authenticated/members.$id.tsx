@@ -97,6 +97,21 @@ function MemberDetail() {
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-lg">Relationship & profile</CardTitle>
+          <MemberDialog householdId={member.household_id} member={member as never} onSaved={refresh}
+            trigger={<Button variant="outline" size="sm"><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>} />
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
+          <p><span className="text-muted-foreground">Marital status:</span> {member.marital_status || "—"}</p>
+          <p><span className="text-muted-foreground">Lead / relationship source:</span> {member.lead_source || "—"}</p>
+          <p><span className="text-muted-foreground">Where we met:</span> {member.source_detail || "—"}</p>
+          <p><span className="text-muted-foreground">Referred by:</span> {member.referred_by || "—"}</p>
+          <p><span className="text-muted-foreground">Date first met:</span> {fmtDate(member.first_met_date)}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-display text-lg">Health & medical</CardTitle>
           <MemberDialog
             householdId={member.household_id}
