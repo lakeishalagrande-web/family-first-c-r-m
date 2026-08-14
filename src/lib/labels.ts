@@ -188,3 +188,34 @@ export function productLabelOf(p: { product_type?: Enums["product_type"] | null;
   const t = productTypeOf(p);
   return t ? PRODUCT_TYPE_LABEL[t] : (p.policy_type || "—");
 }
+
+// ---- Policy design summary --------------------------------------------------
+// Builds a human summary like "Whole Life — 20-Pay", "ROP Term — 30 Year",
+// "Whole Life — Paid to Age 65", "Accidental Death (accident-only)".
+export function paymentDesignLabel(p: {
+  payment_structure?: Enums["payment_structure"] | null;
+  pay_to_age?: number | null;
+}): string | null {
+  const ps = p.payment_structure;
+  if (!ps) return null;
+  if (ps === "paid_to_age") return p.pay_to_age ? `Paid to Age ${p.pay_to_age}` : "Paid to Age …";
+  return PAYMENT_STRUCTURE_LABEL[ps];
+}
+
+export function policyDesignSummary(p: {
+  product_type?: Enums["product_type"] | null;
+  policy_type?: string | null;
+  term_design?: Enums["term_design"] | null;
+  term_length_years?: number | null;
+  payment_structure?: Enums["payment_structure"] | null;
+  pay_to_age?: number | null;
+}): string {
+  const t = productTypeOf(p);
+  const isTerm = t === "term";
+  const base = isTerm && p.term_design ? TERM_DESIGN_LABEL[p.term_design] : productLabelOf(p);
+  const parts: string[] = [];
+  if (isTerm && p.term_length_years) parts.push(`${p.term_length_years} Year`);
+  const pay = paymentDesignLabel(p);
+  if (pay) parts.push(pay);
+  return parts.length ? `${base} — ${parts.join(" · ")}` : base;
+}
