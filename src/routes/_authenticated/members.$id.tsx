@@ -383,50 +383,179 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 }
 
 // ---------------- Beneficiary dialog ----------------
+type BenRow = Database["public"]["Tables"]["beneficiaries"]["Row"];
+
+const emptyBenForm = {
+  member_id: "" as string,
+  full_name: "",
+  relationship: "",
+  percentage: "",
+  beneficiary_type: "primary" as BeneficiaryType,
+  date_of_birth: "",
+  phone: "",
+  ssn: "",
+};
+
+function benFormFrom(b?: BenRow) {
+  if (!b) return { ...emptyBenForm };
+  return {
+    member_id: b.member_id ?? "",
+    full_name: b.full_name ?? "",
+    relationship: b.relationship ?? "",
+    percentage: b.percentage != null ? String(b.percentage) : "",
+    beneficiary_type: (b.beneficiary_type ?? "primary") as BeneficiaryType,
+    date_of_birth: b.date_of_birth ?? "",
+    phone: b.phone ?? "",
+    ssn: "",
+  };
+}
+
 function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
   policyId: string;
-  beneficiary?: Database["public"]["Tables"]["beneficiaries"]["Row"];
+  beneficiary?: BenRow;
   onSaved: () => void; trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({
-    full_name: beneficiary?.full_name ?? "",
-    relationship: beneficiary?.relationship ?? "",
-    percentage: beneficiary?.percentage != null ? String(beneficiary.percentage) : "",
-    beneficiary_type: (beneficiary?.beneficiary_type ?? "primary") as BeneficiaryType,
-  });
+  const [mode, setMode] = useState<"existing" | "new">(beneficiary?.member_id ? "existing" : "new");
+  const [f, setF] = useState(() => benFormFrom(beneficiary));
+  const [term, setTerm] = useState("");
+  const [picked, setPicked] = useState<PersonHit | null>(null);
   const [saving, setSaving] = useState(false);
+  const encryptFn = useServerFn(encryptAndStorePII);
+  const { data: hits, isFetching } = usePersonSearch(mode === "existing" ? term : "");
+
+  function reset() {
+    setF(benFormFrom(beneficiary));
+    setMode(beneficiary?.member_id ? "existing" : "new");
+    setPicked(null);
+    setTerm("");
+  }
+
+  function onOpenChange(v: boolean) {
+    setOpen(v);
+    if (v) reset();
+  }
+
+  function pick(p: PersonHit) {
+    setPicked(p);
+    setF({
+      ...f,
+      member_id: p.id,
+      full_name: `${p.first_name} ${p.last_name}`,
+      relationship: f.relationship || (p.relationship ?? ""),
+      date_of_birth: "",
+      phone: "",
+      ssn: "",
+    });
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "existing" && !f.member_id) return toast.error("Select an existing person or switch to Add new person");
+    if (mode === "new" && !f.full_name.trim()) return toast.error("Full name is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+
+    const linked = mode === "existing";
     const payload = {
       agent_id: user.id,
       policy_id: policyId,
-      full_name: f.full_name,
+      member_id: linked ? f.member_id : null,
+      full_name: f.full_name.trim(),
       relationship: f.relationship || null,
       percentage: f.percentage ? Number(f.percentage) : null,
       beneficiary_type: f.beneficiary_type,
+      // Linked people keep their identity data on their person record — no duplicate copies.
+      date_of_birth: linked ? null : (f.date_of_birth || null),
+      phone: linked ? null : (f.phone || null),
     };
-    const { error } = beneficiary
-      ? await supabase.from("beneficiaries").update(payload).eq("id", beneficiary.id)
-      : await supabase.from("beneficiaries").insert(payload);
+
+    let recordId = beneficiary?.id;
+    if (recordId) {
+      const { error } = await supabase.from("beneficiaries").update(payload).eq("id", recordId);
+      if (error) { setSaving(false); return toast.error(error.message); }
+    } else {
+      const { data, error } = await supabase.from("beneficiaries").insert(payload).select("id").single();
+      if (error) { setSaving(false); return toast.error(error.message); }
+      recordId = data.id;
+    }
+
+    if (!linked && f.ssn) {
+      try { await encryptFn({ data: { recordType: "beneficiary", recordId: recordId!, field: "ssn", value: f.ssn } }); }
+      catch (err) { toast.error("SSN save failed: " + (err as Error).message); }
+    }
+
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success(beneficiary ? "Updated" : "Added");
-    setOpen(false);
     onSaved();
+    if (beneficiary) {
+      setOpen(false);
+    } else {
+      // Clear the form so the next (e.g. contingent) beneficiary starts clean.
+      setF({ ...emptyBenForm });
+      setPicked(null);
+      setTerm("");
+      setOpen(false);
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display">{beneficiary ? "Edit" : "Add"} beneficiary</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant={mode === "existing" ? "default" : "outline"} size="sm" onClick={() => setMode("existing")}>
+              <Search className="h-3 w-3 mr-1" /> Select existing person
+            </Button>
+            <Button type="button" variant={mode === "new" ? "default" : "outline"} size="sm"
+              onClick={() => { setMode("new"); setPicked(null); setF({ ...f, member_id: "" }); }}>
+              <Plus className="h-3 w-3 mr-1" /> Add new person
+            </Button>
+          </div>
+
+          {mode === "existing" ? (
+            <div className="space-y-2">
+              <Label>Search people (name, DOB, phone)</Label>
+              <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="LaToya, 09/14/1982, (312) 555-0134…" />
+              {picked && (
+                <div className="rounded-md border border-gold/40 bg-gold/5 p-2 text-xs">
+                  <p className="font-medium">{picked.first_name} {picked.last_name}</p>
+                  <p className="text-muted-foreground">{personSummary(picked)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Existing person record reused — no duplicate created.</p>
+                </div>
+              )}
+              {!picked && term.trim().length >= 2 && (
+                <div className="max-h-52 overflow-y-auto space-y-1 border rounded-md p-1">
+                  {isFetching && <p className="text-xs text-muted-foreground p-1">Searching…</p>}
+                  {!isFetching && (hits ?? []).length === 0 && <p className="text-xs text-muted-foreground p-1">No matches.</p>}
+                  {(hits ?? []).map((p) => (
+                    <button key={p.id} type="button" onClick={() => pick(p)}
+                      className="w-full text-left rounded px-2 py-1 hover:bg-muted text-xs">
+                      <span className="font-medium">{p.first_name} {p.last_name}</span>
+                      <span className="block text-muted-foreground">{personSummary(p)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {picked && <Button type="button" variant="ghost" size="sm" onClick={() => { setPicked(null); setF({ ...f, member_id: "", full_name: "" }); }}>Choose a different person</Button>}
+            </div>
+          ) : (
+            <>
+              <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Date of birth</Label><Input type="date" value={f.date_of_birth} onChange={(e) => setF({ ...f, date_of_birth: e.target.value })} /></div>
+                <div><Label>Telephone</Label><PhoneInput value={f.phone} onChange={(v) => setF({ ...f, phone: v })} /></div>
+              </div>
+              <div className="rounded-md border border-gold/30 bg-gold/5 p-3">
+                <Label className="text-gold">SSN (encrypted at rest, reveal is logged)</Label>
+                <Input value={f.ssn} onChange={(e) => setF({ ...f, ssn: e.target.value })} placeholder="XXX-XX-XXXX" />
+              </div>
+            </>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Relationship</Label>
