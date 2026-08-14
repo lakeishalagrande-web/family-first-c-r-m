@@ -34,8 +34,14 @@ async function decrypt(blob: Buffer): Promise<string> {
 
 function digitsOnly(s: string) { return s.replace(/\D/g, ""); }
 
+const TABLE_BY_RECORD_TYPE = {
+  family_member: "family_members",
+  term_rider: "term_riders",
+  beneficiary: "beneficiaries",
+} as const;
+
 const encryptInput = z.object({
-  recordType: z.enum(["family_member", "term_rider"]),
+  recordType: z.enum(["family_member", "term_rider", "beneficiary"]),
   recordId: z.string().uuid(),
   field: z.enum(["ssn", "medicare"]),
   value: z.string().min(1).max(64),
@@ -52,7 +58,8 @@ export const encryptAndStorePII = createServerFn({ method: "POST" })
     const ct = await encrypt(data.value);
     const b64 = ct.toString("base64");
 
-    const table = data.recordType === "family_member" ? "family_members" : "term_riders";
+    if (data.recordType === "beneficiary" && data.field !== "ssn") throw new Error("Unsupported field");
+    const table = TABLE_BY_RECORD_TYPE[data.recordType];
     const encCol = data.field === "ssn" ? "ssn_encrypted" : "medicare_encrypted";
     const last4Col = data.field === "ssn" ? "ssn_last4" : "medicare_last4";
 
@@ -67,7 +74,7 @@ export const encryptAndStorePII = createServerFn({ method: "POST" })
   });
 
 const revealInput = z.object({
-  recordType: z.enum(["family_member", "term_rider"]),
+  recordType: z.enum(["family_member", "term_rider", "beneficiary"]),
   recordId: z.string().uuid(),
   field: z.enum(["ssn", "medicare"]),
 });
@@ -77,7 +84,8 @@ export const revealPII = createServerFn({ method: "POST" })
   .inputValidator((d) => revealInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const table = data.recordType === "family_member" ? "family_members" : "term_riders";
+    if (data.recordType === "beneficiary" && data.field !== "ssn") throw new Error("Unsupported field");
+    const table = TABLE_BY_RECORD_TYPE[data.recordType];
     const encCol = data.field === "ssn" ? "ssn_encrypted" : "medicare_encrypted";
 
     // RLS ensures the caller is owning agent or admin
