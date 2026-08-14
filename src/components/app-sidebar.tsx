@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   Upload,
+  Search,
   LogOut,
 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
 const mainItems = [
+  { title: "Find a Person", url: "/search", icon: Search },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Clients & Households", url: "/households", icon: Users },
   { title: "Policies", url: "/policies", icon: FileText },
