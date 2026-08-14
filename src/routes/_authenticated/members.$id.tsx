@@ -9,13 +9,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users } from "lucide-react";
+import { ArrowLeft, Plus, Edit2, Trash2, FileText, Users, Search, Eye, EyeOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
+import { usePersonSearch, personSummary, type PersonHit } from "@/components/person-search";
+import { PhoneInput } from "@/components/phone-input";
 import { MemberDialog } from "./households.$id";
 import { toast } from "sonner";
 import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
-  BENEFICIARY_RELATIONSHIP_OPTIONS,
+  BENEFICIARY_RELATIONSHIP_OPTIONS, mask,
 } from "@/lib/labels";
 
 import { formatPhone } from "@/components/phone-input";
@@ -42,7 +46,7 @@ function MemberDetail() {
       const { data: member } = await supabase.from("family_members").select("*").eq("id", id).maybeSingle();
       if (!member) return { member: null, policies: [], carriers: [] };
       const [{ data: policies }, { data: carriers }] = await Promise.all([
-        supabase.from("policies").select("*, beneficiaries(*)").eq("insured_member_id", id).order("created_at", { ascending: false }),
+        supabase.from("policies").select("*, beneficiaries(*, person:member_id(id, first_name, last_name, date_of_birth, phone_mobile, ssn_last4))").eq("insured_member_id", id).order("created_at", { ascending: false }),
         supabase.from("carriers").select("*").order("name"),
       ]);
       return { member, policies: policies ?? [], carriers: carriers ?? [] };
@@ -93,6 +97,21 @@ function MemberDetail() {
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-lg">Relationship & profile</CardTitle>
+          <MemberDialog householdId={member.household_id} member={member as never} onSaved={refresh}
+            trigger={<Button variant="outline" size="sm"><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>} />
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
+          <p><span className="text-muted-foreground">Marital status:</span> {member.marital_status || "—"}</p>
+          <p><span className="text-muted-foreground">Lead / relationship source:</span> {member.lead_source || "—"}</p>
+          <p><span className="text-muted-foreground">Where we met:</span> {member.source_detail || "—"}</p>
+          <p><span className="text-muted-foreground">Referred by:</span> {member.referred_by || "—"}</p>
+          <p><span className="text-muted-foreground">Date first met:</span> {fmtDate(member.first_met_date)}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-display text-lg">Health & medical</CardTitle>
           <MemberDialog
             householdId={member.household_id}
@@ -138,8 +157,10 @@ function MemberDetail() {
 }
 
 // ---------------- Policy row ----------------
+type LinkedPerson = { id: string; first_name: string; last_name: string; date_of_birth: string | null; phone_mobile: string | null; ssn_last4: string | null } | null;
+type BeneficiaryWithPerson = Database["public"]["Tables"]["beneficiaries"]["Row"] & { person?: LinkedPerson };
 type PolicyWithBens = Database["public"]["Tables"]["policies"]["Row"] & {
-  beneficiaries: Database["public"]["Tables"]["beneficiaries"]["Row"][];
+  beneficiaries: BeneficiaryWithPerson[];
 };
 type Carrier = Database["public"]["Tables"]["carriers"]["Row"];
 
@@ -212,12 +233,8 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
             <p className="text-[10px] font-semibold uppercase text-muted-foreground">{label as string}</p>
             <div className="space-y-1">
               {(list as typeof bens).map((b) => (
-                <div key={b.id} className="flex items-center justify-between text-xs bg-muted/30 rounded px-2 py-1">
-                  <span>
-                    <strong>{b.full_name}</strong>
-                    {b.relationship && ` · ${b.relationship}`}
-                    {b.percentage != null && ` · ${b.percentage}%`}
-                  </span>
+                <div key={b.id} className="flex items-start justify-between text-xs bg-muted/30 rounded px-2 py-1">
+                  <BeneficiaryLine b={b} />
                   <div className="flex gap-1">
                     <BeneficiaryDialog policyId={policy.id} beneficiary={b} onSaved={onChange}
                       trigger={<Button variant="ghost" size="icon" className="h-6 w-6"><Edit2 className="h-3 w-3" /></Button>} />
@@ -383,50 +400,179 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
 }
 
 // ---------------- Beneficiary dialog ----------------
+type BenRow = Database["public"]["Tables"]["beneficiaries"]["Row"];
+
+const emptyBenForm = {
+  member_id: "" as string,
+  full_name: "",
+  relationship: "",
+  percentage: "",
+  beneficiary_type: "primary" as BeneficiaryType,
+  date_of_birth: "",
+  phone: "",
+  ssn: "",
+};
+
+function benFormFrom(b?: BenRow) {
+  if (!b) return { ...emptyBenForm };
+  return {
+    member_id: b.member_id ?? "",
+    full_name: b.full_name ?? "",
+    relationship: b.relationship ?? "",
+    percentage: b.percentage != null ? String(b.percentage) : "",
+    beneficiary_type: (b.beneficiary_type ?? "primary") as BeneficiaryType,
+    date_of_birth: b.date_of_birth ?? "",
+    phone: b.phone ?? "",
+    ssn: "",
+  };
+}
+
 function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
   policyId: string;
-  beneficiary?: Database["public"]["Tables"]["beneficiaries"]["Row"];
+  beneficiary?: BenRow;
   onSaved: () => void; trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({
-    full_name: beneficiary?.full_name ?? "",
-    relationship: beneficiary?.relationship ?? "",
-    percentage: beneficiary?.percentage != null ? String(beneficiary.percentage) : "",
-    beneficiary_type: (beneficiary?.beneficiary_type ?? "primary") as BeneficiaryType,
-  });
+  const [mode, setMode] = useState<"existing" | "new">(beneficiary?.member_id ? "existing" : "new");
+  const [f, setF] = useState(() => benFormFrom(beneficiary));
+  const [term, setTerm] = useState("");
+  const [picked, setPicked] = useState<PersonHit | null>(null);
   const [saving, setSaving] = useState(false);
+  const encryptFn = useServerFn(encryptAndStorePII);
+  const { data: hits, isFetching } = usePersonSearch(mode === "existing" ? term : "");
+
+  function reset() {
+    setF(benFormFrom(beneficiary));
+    setMode(beneficiary?.member_id ? "existing" : "new");
+    setPicked(null);
+    setTerm("");
+  }
+
+  function onOpenChange(v: boolean) {
+    setOpen(v);
+    if (v) reset();
+  }
+
+  function pick(p: PersonHit) {
+    setPicked(p);
+    setF({
+      ...f,
+      member_id: p.id,
+      full_name: `${p.first_name} ${p.last_name}`,
+      relationship: f.relationship || (p.relationship ?? ""),
+      date_of_birth: "",
+      phone: "",
+      ssn: "",
+    });
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "existing" && !f.member_id) return toast.error("Select an existing person or switch to Add new person");
+    if (mode === "new" && !f.full_name.trim()) return toast.error("Full name is required");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+
+    const linked = mode === "existing";
     const payload = {
       agent_id: user.id,
       policy_id: policyId,
-      full_name: f.full_name,
+      member_id: linked ? f.member_id : null,
+      full_name: f.full_name.trim(),
       relationship: f.relationship || null,
       percentage: f.percentage ? Number(f.percentage) : null,
       beneficiary_type: f.beneficiary_type,
+      // Linked people keep their identity data on their person record — no duplicate copies.
+      date_of_birth: linked ? null : (f.date_of_birth || null),
+      phone: linked ? null : (f.phone || null),
     };
-    const { error } = beneficiary
-      ? await supabase.from("beneficiaries").update(payload).eq("id", beneficiary.id)
-      : await supabase.from("beneficiaries").insert(payload);
+
+    let recordId = beneficiary?.id;
+    if (recordId) {
+      const { error } = await supabase.from("beneficiaries").update(payload).eq("id", recordId);
+      if (error) { setSaving(false); return toast.error(error.message); }
+    } else {
+      const { data, error } = await supabase.from("beneficiaries").insert(payload).select("id").single();
+      if (error) { setSaving(false); return toast.error(error.message); }
+      recordId = data.id;
+    }
+
+    if (!linked && f.ssn) {
+      try { await encryptFn({ data: { recordType: "beneficiary", recordId: recordId!, field: "ssn", value: f.ssn } }); }
+      catch (err) { toast.error("SSN save failed: " + (err as Error).message); }
+    }
+
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success(beneficiary ? "Updated" : "Added");
-    setOpen(false);
     onSaved();
+    if (beneficiary) {
+      setOpen(false);
+    } else {
+      // Clear the form so the next (e.g. contingent) beneficiary starts clean.
+      setF({ ...emptyBenForm });
+      setPicked(null);
+      setTerm("");
+      setOpen(false);
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-display">{beneficiary ? "Edit" : "Add"} beneficiary</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant={mode === "existing" ? "default" : "outline"} size="sm" onClick={() => setMode("existing")}>
+              <Search className="h-3 w-3 mr-1" /> Select existing person
+            </Button>
+            <Button type="button" variant={mode === "new" ? "default" : "outline"} size="sm"
+              onClick={() => { setMode("new"); setPicked(null); setF({ ...f, member_id: "" }); }}>
+              <Plus className="h-3 w-3 mr-1" /> Add new person
+            </Button>
+          </div>
+
+          {mode === "existing" ? (
+            <div className="space-y-2">
+              <Label>Search people (name, DOB, phone)</Label>
+              <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="LaToya, 09/14/1982, (312) 555-0134…" />
+              {picked && (
+                <div className="rounded-md border border-gold/40 bg-gold/5 p-2 text-xs">
+                  <p className="font-medium">{picked.first_name} {picked.last_name}</p>
+                  <p className="text-muted-foreground">{personSummary(picked)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Existing person record reused — no duplicate created.</p>
+                </div>
+              )}
+              {!picked && term.trim().length >= 2 && (
+                <div className="max-h-52 overflow-y-auto space-y-1 border rounded-md p-1">
+                  {isFetching && <p className="text-xs text-muted-foreground p-1">Searching…</p>}
+                  {!isFetching && (hits ?? []).length === 0 && <p className="text-xs text-muted-foreground p-1">No matches.</p>}
+                  {(hits ?? []).map((p) => (
+                    <button key={p.id} type="button" onClick={() => pick(p)}
+                      className="w-full text-left rounded px-2 py-1 hover:bg-muted text-xs">
+                      <span className="font-medium">{p.first_name} {p.last_name}</span>
+                      <span className="block text-muted-foreground">{personSummary(p)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {picked && <Button type="button" variant="ghost" size="sm" onClick={() => { setPicked(null); setF({ ...f, member_id: "", full_name: "" }); }}>Choose a different person</Button>}
+            </div>
+          ) : (
+            <>
+              <div><Label>Full name *</Label><Input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Date of birth</Label><Input type="date" value={f.date_of_birth} onChange={(e) => setF({ ...f, date_of_birth: e.target.value })} /></div>
+                <div><Label>Telephone</Label><PhoneInput value={f.phone} onChange={(v) => setF({ ...f, phone: v })} /></div>
+              </div>
+              <div className="rounded-md border border-gold/30 bg-gold/5 p-3">
+                <Label className="text-gold">SSN (encrypted at rest, reveal is logged)</Label>
+                <Input value={f.ssn} onChange={(e) => setF({ ...f, ssn: e.target.value })} placeholder="XXX-XX-XXXX" />
+              </div>
+            </>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Relationship</Label>
@@ -456,5 +602,49 @@ function BeneficiaryDialog({ policyId, beneficiary, onSaved, trigger }: {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---------------- Beneficiary display line ----------------
+function BeneficiaryLine({ b }: { b: BeneficiaryWithPerson }) {
+  const reveal = useServerFn(revealPII);
+  const [shown, setShown] = useState<string | null>(null);
+  const person = b.person ?? null;
+  const dob = person?.date_of_birth ?? b.date_of_birth;
+  const phone = person?.phone_mobile ?? b.phone;
+  const last4 = person?.ssn_last4 ?? b.ssn_last4;
+
+  async function doReveal() {
+    if (shown) return setShown(null);
+    try {
+      const r = await reveal({
+        data: person
+          ? { recordType: "family_member" as const, recordId: person.id, field: "ssn" as const }
+          : { recordType: "beneficiary" as const, recordId: b.id, field: "ssn" as const },
+      });
+      setShown(r.value || "—");
+      toast.success("Access logged");
+    } catch (e) { toast.error((e as Error).message); }
+  }
+
+  return (
+    <span className="min-w-0">
+      <strong>{person ? `${person.first_name} ${person.last_name}` : b.full_name}</strong>
+      {b.relationship && ` · ${b.relationship}`}
+      {b.percentage != null && ` · ${b.percentage}%`}
+      {person && <span className="ml-1 text-[10px] uppercase tracking-wider text-gold">linked</span>}
+      <span className="block text-muted-foreground">
+        {[dob ? `DOB ${fmtDate(dob)}` : null, phone ? formatPhone(phone) : null].filter(Boolean).join(" · ")}
+        {last4 && (
+          <>
+            {(dob || phone) && " · "}
+            SSN <span className="font-mono">{shown || mask(last4)}</span>{" "}
+            <button type="button" onClick={doReveal} className="text-primary hover:underline inline-flex items-center gap-0.5">
+              {shown ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{shown ? "Hide" : "Reveal"}
+            </button>
+          </>
+        )}
+      </span>
+    </span>
   );
 }
