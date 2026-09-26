@@ -301,6 +301,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
       carrier: carrierValue,
       product_type: f.product_type,
       policy_type: PRODUCT_TYPE_LABEL[f.product_type],
+      term_design: f.product_type === "term" ? (f.term_design || null) : null,
+      term_length_years: f.product_type === "term" && f.term_length_years ? Number(f.term_length_years) : null,
+      payment_structure: f.payment_structure || null,
+      pay_to_age: f.payment_structure === "paid_to_age" && f.pay_to_age ? Number(f.pay_to_age) : null,
+
 
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
