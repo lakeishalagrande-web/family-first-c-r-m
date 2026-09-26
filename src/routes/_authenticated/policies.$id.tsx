@@ -84,15 +84,18 @@ function PolicyDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="beneficiaries">Beneficiaries ({bens.length})</TabsTrigger>
-          <TabsTrigger value="riders">Term Riders ({riders.length})</TabsTrigger>
+          <TabsTrigger value="riders">Riders ({riders.length})</TabsTrigger>
           <TabsTrigger value="edit">Edit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <div className="grid gap-3 md:grid-cols-2">
+            <Field label="Product" value={p.product_type ? PRODUCT_TYPE_LABEL[p.product_type] : "—"} sub={isAccidentOnly(p) ? "Accident-only coverage" : undefined} highlight={isAccidentOnly(p)} />
+            <Field label="Coverage summary" value={policyDesignSummary(p)} />
             <Field label="Face amount" value={fmtCurrency(Number(p.face_amount))} />
             <Field label="Monthly premium" value={fmtCurrency(Number(p.monthly_premium))} />
-            <Field label="Payment structure" value={p.payment_structure ? PAYMENT_STRUCTURE_LABEL[p.payment_structure] : "—"} />
+            <Field label="Term design" value={p.term_design ? TERM_DESIGN_LABEL[p.term_design] : "—"} sub={p.term_length_years ? `${p.term_length_years} year term` : undefined} />
+            <Field label="Premium / payment design" value={paymentDesignLabel(p) ?? "—"} />
             <Field label="Rate class" value={p.rate_class ? RATE_CLASS_LABEL[p.rate_class] : "—"} />
             <Field label="Owner" value={p.owner_name || "—"} />
             <Field label="Owner type" value={p.owner_type ? OWNER_TYPE_LABEL[p.owner_type] : "—"} />
