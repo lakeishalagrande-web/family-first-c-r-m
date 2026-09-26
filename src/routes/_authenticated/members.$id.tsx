@@ -20,6 +20,7 @@ import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
   BENEFICIARY_RELATIONSHIP_OPTIONS, mask,
+  TERM_DESIGN_LABEL, PAYMENT_STRUCTURE_LABEL, RIDER_TYPE_LABEL, policyDesignSummary, isAccidentOnly,
 } from "@/lib/labels";
 
 import { formatPhone } from "@/components/phone-input";
@@ -192,7 +193,8 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{policy.carrier || "—"}</p>
             <span className="text-xs text-muted-foreground">·</span>
-            <span className="text-sm">{productLabelOf(policy)}</span>
+            <span className="text-sm">{policyDesignSummary(policy)}</span>
+            {isAccidentOnly(policy) && <Badge variant="destructive">Accident-only</Badge>}
             <Badge variant={policy.status === "active" ? "default" : policy.status === "lapsed" || policy.status === "cancelled" ? "destructive" : "secondary"}>
               {policy.status ? POLICY_STATUS_LABEL[policy.status] : "—"}
             </Badge>
