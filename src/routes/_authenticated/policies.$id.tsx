@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL } from "@/lib/labels";
+import { fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL, TERM_DESIGN_LABEL, RIDER_TYPE_LABEL, policyDesignSummary, paymentDesignLabel, isAccidentOnly, riderTerminationDate } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 
 export const Route = createFileRoute("/_authenticated/policies/$id")({
@@ -115,7 +115,7 @@ function PolicyDetail() {
         </TabsContent>
 
         <TabsContent value="riders">
-          <RidersPanel policyId={id} riders={riders} onChange={() => qc.invalidateQueries({ queryKey: ["policy", id] })} />
+          <RidersPanel policyId={id} riders={riders} members={members} onChange={() => qc.invalidateQueries({ queryKey: ["policy", id] })} />
         </TabsContent>
 
         <TabsContent value="edit">
