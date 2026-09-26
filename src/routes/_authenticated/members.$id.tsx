@@ -360,6 +360,43 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
               </Select>
             </div>
           </div>
+
+          {f.product_type === "accidental_death" && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">
+              Accident-only coverage — pays only for accidental death. It is not traditional life insurance.
+            </p>
+          )}
+
+          {f.product_type === "term" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Term design</Label>
+                <Select value={f.term_design} onValueChange={(v) => setF({ ...f, term_design: v as Database["public"]["Enums"]["term_design"] })}>
+                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TERM_DESIGN_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Term length (years)</Label><Input type="number" min="1" value={f.term_length_years} onChange={(e) => setF({ ...f, term_length_years: e.target.value })} /></div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Premium / payment design</Label>
+              <Select value={f.payment_structure} onValueChange={(v) => setF({ ...f, payment_structure: v as Database["public"]["Enums"]["payment_structure"] })}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {Object.entries(PAYMENT_STRUCTURE_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {f.payment_structure === "paid_to_age" && (
+              <div><Label>Paid to age</Label><Input type="number" min="1" max="121" value={f.pay_to_age} onChange={(e) => setF({ ...f, pay_to_age: e.target.value })} /></div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Policy #</Label><Input value={f.policy_number} onChange={(e) => setF({ ...f, policy_number: e.target.value })} /></div>
             <div><Label>Effective date</Label><Input type="date" value={f.effective_date} onChange={(e) => setF({ ...f, effective_date: e.target.value })} /></div>
