@@ -426,6 +426,11 @@ function EditPolicyForm({ policy, onSaved }: { policy: Record<string, unknown> &
     reinstatement_deadline: ((get("reinstatement_deadline") as string) ?? ""),
     issue_date: ((get("issue_date") as string) ?? ""),
     application_date: ((get("application_date") as string) ?? ""),
+    product_type: ((get("product_type") as string) ?? ""),
+    term_design: ((get("term_design") as string) ?? ""),
+    term_length_years: String(get("term_length_years") ?? ""),
+    payment_structure: ((get("payment_structure") as string) ?? ""),
+    pay_to_age: String(get("pay_to_age") ?? ""),
     notes: ((get("notes") as string) ?? ""),
   });
   const [saving, setSaving] = useState(false);
