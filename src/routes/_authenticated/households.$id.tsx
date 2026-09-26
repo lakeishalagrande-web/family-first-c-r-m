@@ -257,6 +257,9 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
     source_detail: (initial as { source_detail?: string }).source_detail ?? "",
     referred_by: (initial as { referred_by?: string }).referred_by ?? "",
     first_met_date: (initial as { first_met_date?: string }).first_met_date ?? "",
+    employer_name: (initial as { employer_name?: string }).employer_name ?? "",
+    place_of_birth: (initial as { place_of_birth?: string }).place_of_birth ?? "",
+    us_citizen: (initial as { us_citizen?: string }).us_citizen ?? "",
     ssn: "",
     medicare: "",
   });
@@ -297,6 +300,9 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
       source_detail: f.source_detail || null,
       referred_by: f.referred_by || null,
       first_met_date: f.first_met_date || null,
+      employer_name: f.employer_name || null,
+      place_of_birth: f.place_of_birth || null,
+      us_citizen: f.us_citizen || null,
       medications: cleanedMeds,
     };
 
