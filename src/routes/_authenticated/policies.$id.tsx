@@ -478,6 +478,41 @@ function EditPolicyForm({ policy, onSaved }: { policy: Record<string, unknown> &
           <div><Label>Application date</Label><Input type="date" value={f.application_date} onChange={(e) => setF({ ...f, application_date: e.target.value })} /></div>
           <div><Label>Issue date</Label><Input type="date" value={f.issue_date} onChange={(e) => setF({ ...f, issue_date: e.target.value })} /></div>
         </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <Label>Product type</Label>
+            <Select value={f.product_type} onValueChange={(v) => setF({ ...f, product_type: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent className="max-h-72">{Object.entries(PRODUCT_TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Premium / payment design</Label>
+            <Select value={f.payment_structure} onValueChange={(v) => setF({ ...f, payment_structure: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent className="max-h-72">{Object.entries(PAYMENT_STRUCTURE_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {f.payment_structure === "paid_to_age" && (
+            <div><Label>Paid to age</Label><Input type="number" value={f.pay_to_age} onChange={(e) => setF({ ...f, pay_to_age: e.target.value })} /></div>
+          )}
+          {f.product_type === "term" && (
+            <>
+              <div>
+                <Label>Term design</Label>
+                <Select value={f.term_design} onValueChange={(v) => setF({ ...f, term_design: v })}>
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>{Object.entries(TERM_DESIGN_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Term length (years)</Label><Input type="number" value={f.term_length_years} onChange={(e) => setF({ ...f, term_length_years: e.target.value })} /></div>
+            </>
+          )}
+        </div>
+        {f.product_type === "accidental_death" && (
+          <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">Accident-only coverage — not traditional life insurance.</p>
+        )}
+
         <div><Label>Notes</Label><Textarea rows={3} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
