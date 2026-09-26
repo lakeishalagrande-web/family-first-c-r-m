@@ -445,6 +445,12 @@ function EditPolicyForm({ policy, onSaved }: { policy: Record<string, unknown> &
       monthly_premium: f.monthly_premium ? Number(f.monthly_premium) : null,
       reinstatement_deadline: f.reinstatement_deadline || null,
       issue_date: f.issue_date || null, application_date: f.application_date || null,
+      product_type: (f.product_type || null) as never,
+      policy_type: f.product_type ? PRODUCT_TYPE_LABEL[f.product_type as keyof typeof PRODUCT_TYPE_LABEL] : null,
+      term_design: (f.product_type === "term" ? (f.term_design || null) : null) as never,
+      term_length_years: f.product_type === "term" && f.term_length_years ? Number(f.term_length_years) : null,
+      payment_structure: (f.payment_structure || null) as never,
+      pay_to_age: f.payment_structure === "paid_to_age" && f.pay_to_age ? Number(f.pay_to_age) : null,
       notes: f.notes || null,
     }).eq("id", policy.id);
     setSaving(false);
