@@ -154,6 +154,65 @@ function MemberDetail() {
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-lg">Insurance application details</CardTitle>
+          <MemberDialog householdId={member.household_id} member={member as never} onSaved={refresh}
+            trigger={<Button variant="outline" size="sm"><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>} />
+        </CardHeader>
+        <CardContent>
+          <details>
+            <summary className="cursor-pointer text-sm text-muted-foreground select-none">Show application information</summary>
+            <div className="grid gap-2 sm:grid-cols-2 text-sm mt-3">
+              <p><span className="text-muted-foreground">Employer:</span> {member.employer_name || "—"}</p>
+              <p><span className="text-muted-foreground">Occupation:</span> {member.occupation || "—"}</p>
+              <p><span className="text-muted-foreground">Place of birth:</span> {member.place_of_birth || "—"}</p>
+              <p><span className="text-muted-foreground">U.S. citizen:</span> {member.us_citizen ? CITIZENSHIP_LABEL[member.us_citizen as keyof typeof CITIZENSHIP_LABEL] ?? member.us_citizen : "Unknown"}</p>
+            </div>
+          </details>
+        </CardContent>
+      </Card>
+
+      {riderCoverage.length > 0 && (
+        <Card className="shadow-card border-gold/40">
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Covered as a rider ({riderCoverage.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              This person is covered under someone else&apos;s policy. These are not standalone policies they own.
+            </p>
+            {riderCoverage.map((r) => {
+              const rr = r as RiderCoverage;
+              return (
+                <div key={rr.id} className="border rounded-lg p-3 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="border-gold">{RIDER_TYPE_LABEL[rr.rider_type]}</Badge>
+                    <span className="text-sm">
+                      Covered as rider on{" "}
+                      {rr.policy ? (
+                        <Link to="/policies/$id" params={{ id: rr.policy.id }} className="text-primary hover:underline font-medium">
+                          {riderBaseLabel(rr)}
+                        </Link>
+                      ) : "—"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Coverage {fmtCurrency(rr.coverage_amount != null ? Number(rr.coverage_amount) : null)}
+                    {` · Effective ${fmtDate(rr.effective_date)}`}
+                    {rr.termination_age != null && ` · Terminates at age ${rr.termination_age}`}
+                    {rr.termination_date && ` · Terminates ${fmtDate(rr.termination_date)}`}
+                    {rr.conversion_eligible != null && ` · Conversion ${rr.conversion_eligible ? "eligible" : "not eligible"}`}
+                  </p>
+                  {rr.conversion_notes && <p className="text-xs">{rr.conversion_notes}</p>}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-display text-xl flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Policies ({policies.length})</CardTitle>
           <PolicyDialog
             memberId={id}
