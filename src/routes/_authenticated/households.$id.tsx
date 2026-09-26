@@ -414,6 +414,25 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
             </div>
           </div>
 
+          <details className="rounded-lg border p-3">
+            <summary className="cursor-pointer text-sm font-medium select-none">Insurance application details</summary>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div><Label>Employer name</Label><Input value={f.employer_name} onChange={(e) => setF({ ...f, employer_name: e.target.value })} /></div>
+              <div><Label>Occupation</Label><Input value={f.occupation} onChange={(e) => setF({ ...f, occupation: e.target.value })} /></div>
+              <div><Label>Place of birth</Label><Input value={f.place_of_birth} onChange={(e) => setF({ ...f, place_of_birth: e.target.value })} placeholder="Chicago, IL" /></div>
+              <div>
+                <Label>U.S. citizen?</Label>
+                <Select value={f.us_citizen} onValueChange={(v) => setF({ ...f, us_citizen: v })}>
+                  <SelectTrigger><SelectValue placeholder="Unknown" /></SelectTrigger>
+                  <SelectContent>
+                    {CITIZENSHIP_OPTIONS.map((o) => <SelectItem key={o} value={o}>{CITIZENSHIP_LABEL[o]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </details>
+
+
           <div className="rounded-md border border-gold/30 bg-gold/5 p-3 space-y-3">
             <p className="text-xs font-medium text-gold uppercase tracking-wider">Encrypted — stored at rest</p>
             <div className="grid grid-cols-2 gap-3">
