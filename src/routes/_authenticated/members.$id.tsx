@@ -45,12 +45,15 @@ function MemberDetail() {
     queryKey: ["member", id],
     queryFn: async () => {
       const { data: member } = await supabase.from("family_members").select("*").eq("id", id).maybeSingle();
-      if (!member) return { member: null, policies: [], carriers: [] };
-      const [{ data: policies }, { data: carriers }] = await Promise.all([
+      if (!member) return { member: null, policies: [], carriers: [], riderCoverage: [] };
+      const [{ data: policies }, { data: carriers }, { data: riderCoverage }] = await Promise.all([
         supabase.from("policies").select("*, beneficiaries(*, person:member_id(id, first_name, last_name, date_of_birth, phone_mobile, ssn_last4))").eq("insured_member_id", id).order("created_at", { ascending: false }),
         supabase.from("carriers").select("*").order("name"),
+        supabase.from("term_riders")
+          .select("*, policy:policy_id(id, carrier, policy_number, product_type, policy_type, term_design, term_length_years, payment_structure, pay_to_age, insured:insured_member_id(id, first_name, last_name))")
+          .eq("covered_member_id", id),
       ]);
-      return { member, policies: policies ?? [], carriers: carriers ?? [] };
+      return { member, policies: policies ?? [], carriers: carriers ?? [], riderCoverage: riderCoverage ?? [] };
     },
   });
 
