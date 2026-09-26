@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, FileText, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf, MARITAL_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS } from "@/lib/labels";
+import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf, MARITAL_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS, CITIZENSHIP_OPTIONS, CITIZENSHIP_LABEL, policyDesignSummary, isAccidentOnly } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 import { PhoneInput, formatPhone } from "@/components/phone-input";
 import { HeightInput, formatHeight } from "@/components/height-input";
