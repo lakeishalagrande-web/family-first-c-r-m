@@ -20,6 +20,8 @@ import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
   BENEFICIARY_RELATIONSHIP_OPTIONS, mask,
+  TERM_DESIGN_LABEL, PAYMENT_STRUCTURE_LABEL, RIDER_TYPE_LABEL, CITIZENSHIP_LABEL,
+  policyDesignSummary, isAccidentOnly, riderBaseLabel, type RiderCoverage,
 } from "@/lib/labels";
 
 import { formatPhone } from "@/components/phone-input";
@@ -44,18 +46,21 @@ function MemberDetail() {
     queryKey: ["member", id],
     queryFn: async () => {
       const { data: member } = await supabase.from("family_members").select("*").eq("id", id).maybeSingle();
-      if (!member) return { member: null, policies: [], carriers: [] };
-      const [{ data: policies }, { data: carriers }] = await Promise.all([
+      if (!member) return { member: null, policies: [], carriers: [], riderCoverage: [] };
+      const [{ data: policies }, { data: carriers }, { data: riderCoverage }] = await Promise.all([
         supabase.from("policies").select("*, beneficiaries(*, person:member_id(id, first_name, last_name, date_of_birth, phone_mobile, ssn_last4))").eq("insured_member_id", id).order("created_at", { ascending: false }),
         supabase.from("carriers").select("*").order("name"),
+        supabase.from("term_riders")
+          .select("*, policy:policy_id(id, carrier, policy_number, product_type, policy_type, term_design, term_length_years, payment_structure, pay_to_age, insured:insured_member_id(id, first_name, last_name))")
+          .eq("covered_member_id", id),
       ]);
-      return { member, policies: policies ?? [], carriers: carriers ?? [] };
+      return { member, policies: policies ?? [], carriers: carriers ?? [], riderCoverage: riderCoverage ?? [] };
     },
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.member) return <p>Not found.</p>;
-  const { member, policies, carriers } = data;
+  const { member, policies, carriers, riderCoverage } = data;
   const age = calcAge(member.date_of_birth);
   const refresh = () => qc.invalidateQueries({ queryKey: ["member", id] });
   const meds = (member.medications as Array<{ name: string; dosage?: string }> | null) ?? [];
@@ -86,6 +91,20 @@ function MemberDetail() {
                 ))}
               </div>
             )}
+            {riderCoverage.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {riderCoverage.map((r) => {
+                  const rr = r as RiderCoverage;
+                  return (
+                    <Badge key={rr.id} variant="outline" className="border-gold text-foreground">
+                      Covered as {RIDER_TYPE_LABEL[rr.rider_type]} on {riderBaseLabel(rr)}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+
 
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
@@ -133,6 +152,65 @@ function MemberDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-lg">Insurance application details</CardTitle>
+          <MemberDialog householdId={member.household_id} member={member as never} onSaved={refresh}
+            trigger={<Button variant="outline" size="sm"><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>} />
+        </CardHeader>
+        <CardContent>
+          <details>
+            <summary className="cursor-pointer text-sm text-muted-foreground select-none">Show application information</summary>
+            <div className="grid gap-2 sm:grid-cols-2 text-sm mt-3">
+              <p><span className="text-muted-foreground">Employer:</span> {member.employer_name || "—"}</p>
+              <p><span className="text-muted-foreground">Occupation:</span> {member.occupation || "—"}</p>
+              <p><span className="text-muted-foreground">Place of birth:</span> {member.place_of_birth || "—"}</p>
+              <p><span className="text-muted-foreground">U.S. citizen:</span> {member.us_citizen ? CITIZENSHIP_LABEL[member.us_citizen as keyof typeof CITIZENSHIP_LABEL] ?? member.us_citizen : "Unknown"}</p>
+            </div>
+          </details>
+        </CardContent>
+      </Card>
+
+      {riderCoverage.length > 0 && (
+        <Card className="shadow-card border-gold/40">
+          <CardHeader>
+            <CardTitle className="font-display text-lg">Covered as a rider ({riderCoverage.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              This person is covered under someone else&apos;s policy. These are not standalone policies they own.
+            </p>
+            {riderCoverage.map((r) => {
+              const rr = r as RiderCoverage;
+              return (
+                <div key={rr.id} className="border rounded-lg p-3 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="border-gold">{RIDER_TYPE_LABEL[rr.rider_type]}</Badge>
+                    <span className="text-sm">
+                      Covered as rider on{" "}
+                      {rr.policy ? (
+                        <Link to="/policies/$id" params={{ id: rr.policy.id }} className="text-primary hover:underline font-medium">
+                          {riderBaseLabel(rr)}
+                        </Link>
+                      ) : "—"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Coverage {fmtCurrency(rr.coverage_amount != null ? Number(rr.coverage_amount) : null)}
+                    {` · Effective ${fmtDate(rr.effective_date)}`}
+                    {rr.termination_age != null && ` · Terminates at age ${rr.termination_age}`}
+                    {rr.termination_date && ` · Terminates ${fmtDate(rr.termination_date)}`}
+                    {rr.conversion_eligible != null && ` · Conversion ${rr.conversion_eligible ? "eligible" : "not eligible"}`}
+                  </p>
+                  {rr.conversion_notes && <p className="text-xs">{rr.conversion_notes}</p>}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -192,7 +270,8 @@ function PolicyRow({ policy, carriers, memberId, householdId, onChange }: {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{policy.carrier || "—"}</p>
             <span className="text-xs text-muted-foreground">·</span>
-            <span className="text-sm">{productLabelOf(policy)}</span>
+            <span className="text-sm">{policyDesignSummary(policy)}</span>
+            {isAccidentOnly(policy) && <Badge variant="destructive">Accident-only</Badge>}
             <Badge variant={policy.status === "active" ? "default" : policy.status === "lapsed" || policy.status === "cancelled" ? "destructive" : "secondary"}>
               {policy.status ? POLICY_STATUS_LABEL[policy.status] : "—"}
             </Badge>
@@ -269,6 +348,10 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
     carrier: initialIsOther ? "__other__" : initialCarrier,
     customCarrier: initialIsOther ? initialCarrier : "",
     product_type: (productTypeOf(policy ?? {}) ?? "") as "" | Database["public"]["Enums"]["product_type"],
+    term_design: (policy?.term_design ?? "") as "" | Database["public"]["Enums"]["term_design"],
+    term_length_years: policy?.term_length_years != null ? String(policy.term_length_years) : "",
+    payment_structure: (policy?.payment_structure ?? "") as "" | Database["public"]["Enums"]["payment_structure"],
+    pay_to_age: policy?.pay_to_age != null ? String(policy.pay_to_age) : "",
     policy_number: policy?.policy_number ?? "",
     effective_date: policy?.effective_date ?? "",
     status: (policy?.status ?? "active") as PolicyStatus,
@@ -297,6 +380,11 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
       carrier: carrierValue,
       product_type: f.product_type,
       policy_type: PRODUCT_TYPE_LABEL[f.product_type],
+      term_design: f.product_type === "term" ? (f.term_design || null) : null,
+      term_length_years: f.product_type === "term" && f.term_length_years ? Number(f.term_length_years) : null,
+      payment_structure: f.payment_structure || null,
+      pay_to_age: f.payment_structure === "paid_to_age" && f.pay_to_age ? Number(f.pay_to_age) : null,
+
 
       policy_number: f.policy_number || null,
       effective_date: f.effective_date || null,
@@ -351,6 +439,43 @@ function PolicyDialog({ memberId, householdId, carriers, policy, onSaved, trigge
               </Select>
             </div>
           </div>
+
+          {f.product_type === "accidental_death" && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">
+              Accident-only coverage — pays only for accidental death. It is not traditional life insurance.
+            </p>
+          )}
+
+          {f.product_type === "term" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Term design</Label>
+                <Select value={f.term_design} onValueChange={(v) => setF({ ...f, term_design: v as Database["public"]["Enums"]["term_design"] })}>
+                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TERM_DESIGN_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Term length (years)</Label><Input type="number" min="1" value={f.term_length_years} onChange={(e) => setF({ ...f, term_length_years: e.target.value })} /></div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Premium / payment design</Label>
+              <Select value={f.payment_structure} onValueChange={(v) => setF({ ...f, payment_structure: v as Database["public"]["Enums"]["payment_structure"] })}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {Object.entries(PAYMENT_STRUCTURE_LABEL).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {f.payment_structure === "paid_to_age" && (
+              <div><Label>Paid to age</Label><Input type="number" min="1" max="121" value={f.pay_to_age} onChange={(e) => setF({ ...f, pay_to_age: e.target.value })} /></div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Policy #</Label><Input value={f.policy_number} onChange={(e) => setF({ ...f, policy_number: e.target.value })} /></div>
             <div><Label>Effective date</Label><Input type="date" value={f.effective_date} onChange={(e) => setF({ ...f, effective_date: e.target.value })} /></div>

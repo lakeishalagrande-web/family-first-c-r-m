@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, FileText, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf, MARITAL_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS } from "@/lib/labels";
+import { calcAge, fmtCurrency, fmtDate, mask, PRODUCT_TYPE_LABEL, POLICY_STATUS_LABEL, productLabelOf, MARITAL_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS, CITIZENSHIP_OPTIONS, CITIZENSHIP_LABEL, policyDesignSummary, isAccidentOnly } from "@/lib/labels";
 import { encryptAndStorePII, revealPII } from "@/lib/pii.functions";
 import { PhoneInput, formatPhone } from "@/components/phone-input";
 import { HeightInput, formatHeight } from "@/components/height-input";
@@ -257,6 +257,9 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
     source_detail: (initial as { source_detail?: string }).source_detail ?? "",
     referred_by: (initial as { referred_by?: string }).referred_by ?? "",
     first_met_date: (initial as { first_met_date?: string }).first_met_date ?? "",
+    employer_name: (initial as { employer_name?: string }).employer_name ?? "",
+    place_of_birth: (initial as { place_of_birth?: string }).place_of_birth ?? "",
+    us_citizen: (initial as { us_citizen?: string }).us_citizen ?? "",
     ssn: "",
     medicare: "",
   });
@@ -297,6 +300,9 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
       source_detail: f.source_detail || null,
       referred_by: f.referred_by || null,
       first_met_date: f.first_met_date || null,
+      employer_name: f.employer_name || null,
+      place_of_birth: f.place_of_birth || null,
+      us_citizen: f.us_citizen || null,
       medications: cleanedMeds,
     };
 
@@ -407,6 +413,25 @@ export function MemberDialog({ householdId, member, onSaved, trigger }: { househ
               <div><Label>Referred by</Label><Input value={f.referred_by} onChange={(e) => setF({ ...f, referred_by: e.target.value })} /></div>
             </div>
           </div>
+
+          <details className="rounded-lg border p-3">
+            <summary className="cursor-pointer text-sm font-medium select-none">Insurance application details</summary>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div><Label>Employer name</Label><Input value={f.employer_name} onChange={(e) => setF({ ...f, employer_name: e.target.value })} /></div>
+              <div><Label>Occupation</Label><Input value={f.occupation} onChange={(e) => setF({ ...f, occupation: e.target.value })} /></div>
+              <div><Label>Place of birth</Label><Input value={f.place_of_birth} onChange={(e) => setF({ ...f, place_of_birth: e.target.value })} placeholder="Chicago, IL" /></div>
+              <div>
+                <Label>U.S. citizen?</Label>
+                <Select value={f.us_citizen} onValueChange={(v) => setF({ ...f, us_citizen: v })}>
+                  <SelectTrigger><SelectValue placeholder="Unknown" /></SelectTrigger>
+                  <SelectContent>
+                    {CITIZENSHIP_OPTIONS.map((o) => <SelectItem key={o} value={o}>{CITIZENSHIP_LABEL[o]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </details>
+
 
           <div className="rounded-md border border-gold/30 bg-gold/5 p-3 space-y-3">
             <p className="text-xs font-medium text-gold uppercase tracking-wider">Encrypted — stored at rest</p>

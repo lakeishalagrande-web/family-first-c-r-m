@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { riderTerminationDate } from "@/lib/labels";
 
 // Regenerates dashboard alerts for the current agent based on policy dates,
 // member birthdays, beneficiary birthdays, and pending follow-ups.
@@ -22,7 +23,7 @@ export const regenerateAlerts = createServerFn({ method: "POST" })
 
     type AlertInsert = {
       agent_id: string;
-      alert_type: "reinstatement" | "anniversary" | "client_birthday" | "beneficiary_birthday" | "follow_up";
+      alert_type: "reinstatement" | "anniversary" | "client_birthday" | "beneficiary_birthday" | "follow_up" | "rider_termination";
       title: string;
       description?: string | null;
       due_date: string;
@@ -31,11 +32,12 @@ export const regenerateAlerts = createServerFn({ method: "POST" })
     };
     const alerts: AlertInsert[] = [];
 
-    const [policiesRes, membersRes, beneficiariesRes, followUpsRes] = await Promise.all([
+    const [policiesRes, membersRes, beneficiariesRes, followUpsRes, ridersRes] = await Promise.all([
       supabase.from("policies").select("id, policy_number, carrier, household_id, reinstatement_deadline, issue_date, status").eq("agent_id", userId),
       supabase.from("family_members").select("id, first_name, last_name, date_of_birth, household_id").eq("agent_id", userId),
       supabase.from("beneficiaries").select("id, full_name, date_of_birth, policy_id").eq("agent_id", userId),
       supabase.from("follow_ups").select("id, next_follow_up_date, notes, household_id, policy_id").eq("agent_id", userId).not("next_follow_up_date", "is", null),
+      supabase.from("term_riders").select("id, rider_type, child_name, date_of_birth, termination_age, termination_date, policy_id, covered_member_id").eq("agent_id", userId),
     ]);
 
     // Reinstatement deadlines
@@ -127,6 +129,25 @@ export const regenerateAlerts = createServerFn({ method: "POST" })
           due_date: f.next_follow_up_date,
           related_household_id: f.household_id,
           related_policy_id: f.policy_id,
+        });
+      }
+    }
+
+    // Rider terminations approaching (within 120 days) — child riders age out,
+    // so review individual coverage before the rider ends.
+    for (const r of ridersRes.data ?? []) {
+      const term = riderTerminationDate(r);
+      if (!term) continue;
+      const days = Math.round((new Date(term).getTime() - today.getTime()) / 86400000);
+      if (days >= 0 && days <= 120) {
+        const label = r.rider_type === "child" ? "Child rider" : r.rider_type === "spouse" ? "Spouse rider" : "Other insured rider";
+        alerts.push({
+          agent_id: userId,
+          alert_type: "rider_termination",
+          title: `${label} approaching termination — review individual coverage`,
+          description: `${r.child_name}${r.termination_age != null ? ` turns ${r.termination_age}` : ""} — rider ends in ${days} day${days === 1 ? "" : "s"}`,
+          due_date: term,
+          related_policy_id: r.policy_id,
         });
       }
     }

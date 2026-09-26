@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PRODUCT_TYPE_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { PRODUCT_TYPE_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL, POLICY_STATUS_LABEL, TERM_DESIGN_LABEL } from "@/lib/labels";
 
 const searchSchema = z.object({ household: z.string().optional() });
 
@@ -42,6 +42,7 @@ function NewPolicy() {
 
   const [f, setF] = useState({
     policy_number: "", carrier: "", custom_carrier: "", product_type: "" as string,
+    term_design: "" as string, term_length_years: "", pay_to_age: "",
     insured_member_id: "", owner_name: "", owner_type: "" as string,
     face_amount: "", monthly_premium: "", payment_structure: "" as string,
     rate_class: "" as string, status: "active" as string,
@@ -69,6 +70,9 @@ function NewPolicy() {
       policy_number: f.policy_number || null, carrier: carrierValue,
       product_type: f.product_type as never,
       policy_type: PRODUCT_TYPE_LABEL[f.product_type as keyof typeof PRODUCT_TYPE_LABEL],
+      term_design: (f.product_type === "term" ? (f.term_design || null) : null) as never,
+      term_length_years: f.product_type === "term" && f.term_length_years ? Number(f.term_length_years) : null,
+      pay_to_age: f.payment_structure === "paid_to_age" && f.pay_to_age ? Number(f.pay_to_age) : null,
 
       owner_name: f.owner_name || null, owner_type: (f.owner_type || null) as never,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
@@ -142,7 +146,22 @@ function NewPolicy() {
             <Label>Status</Label>
             <EnumSelect value={f.status} onChange={(v) => setF({ ...f, status: v })} options={POLICY_STATUS_LABEL} />
           </div>
+          {f.product_type === "accidental_death" && (
+            <p className="sm:col-span-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">
+              Accident-only coverage — pays only for accidental death. It is not traditional life insurance.
+            </p>
+          )}
+          {f.product_type === "term" && (
+            <>
+              <div>
+                <Label>Term design</Label>
+                <EnumSelect value={f.term_design} onChange={(v) => setF({ ...f, term_design: v })} options={TERM_DESIGN_LABEL} />
+              </div>
+              <div><Label>Term length (years)</Label><Input type="number" min="1" value={f.term_length_years} onChange={(e) => setF({ ...f, term_length_years: e.target.value })} /></div>
+            </>
+          )}
         </CardContent></Card>
+
 
         <Card className="shadow-card"><CardHeader><CardTitle className="font-display text-lg">Ownership</CardTitle></CardHeader><CardContent className="grid sm:grid-cols-2 gap-3">
           <div><Label>Owner name (if different from insured)</Label><Input value={f.owner_name} onChange={(e) => setF({ ...f, owner_name: e.target.value })} /></div>
@@ -152,7 +171,10 @@ function NewPolicy() {
         <Card className="shadow-card"><CardHeader><CardTitle className="font-display text-lg">Coverage & premium</CardTitle></CardHeader><CardContent className="grid sm:grid-cols-2 gap-3">
           <div><Label>Face amount / death benefit</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
           <div><Label>Monthly premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
-          <div><Label>Payment structure</Label><EnumSelect value={f.payment_structure} onChange={(v) => setF({ ...f, payment_structure: v })} options={PAYMENT_STRUCTURE_LABEL} /></div>
+          <div><Label>Premium / payment design</Label><EnumSelect value={f.payment_structure} onChange={(v) => setF({ ...f, payment_structure: v })} options={PAYMENT_STRUCTURE_LABEL} /></div>
+          {f.payment_structure === "paid_to_age" && (
+            <div><Label>Paid to age</Label><Input type="number" min="1" max="121" value={f.pay_to_age} onChange={(e) => setF({ ...f, pay_to_age: e.target.value })} /></div>
+          )}
           <div><Label>Rate class</Label><EnumSelect value={f.rate_class} onChange={(v) => setF({ ...f, rate_class: v })} options={RATE_CLASS_LABEL} /></div>
         </CardContent></Card>
 
