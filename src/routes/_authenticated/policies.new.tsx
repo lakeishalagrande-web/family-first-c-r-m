@@ -142,7 +142,22 @@ function NewPolicy() {
             <Label>Status</Label>
             <EnumSelect value={f.status} onChange={(v) => setF({ ...f, status: v })} options={POLICY_STATUS_LABEL} />
           </div>
+          {f.product_type === "accidental_death" && (
+            <p className="sm:col-span-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">
+              Accident-only coverage — pays only for accidental death. It is not traditional life insurance.
+            </p>
+          )}
+          {f.product_type === "term" && (
+            <>
+              <div>
+                <Label>Term design</Label>
+                <EnumSelect value={f.term_design} onChange={(v) => setF({ ...f, term_design: v })} options={TERM_DESIGN_LABEL} />
+              </div>
+              <div><Label>Term length (years)</Label><Input type="number" min="1" value={f.term_length_years} onChange={(e) => setF({ ...f, term_length_years: e.target.value })} /></div>
+            </>
+          )}
         </CardContent></Card>
+
 
         <Card className="shadow-card"><CardHeader><CardTitle className="font-display text-lg">Ownership</CardTitle></CardHeader><CardContent className="grid sm:grid-cols-2 gap-3">
           <div><Label>Owner name (if different from insured)</Label><Input value={f.owner_name} onChange={(e) => setF({ ...f, owner_name: e.target.value })} /></div>
