@@ -171,7 +171,10 @@ function NewPolicy() {
         <Card className="shadow-card"><CardHeader><CardTitle className="font-display text-lg">Coverage & premium</CardTitle></CardHeader><CardContent className="grid sm:grid-cols-2 gap-3">
           <div><Label>Face amount / death benefit</Label><Input type="number" value={f.face_amount} onChange={(e) => setF({ ...f, face_amount: e.target.value })} /></div>
           <div><Label>Monthly premium</Label><Input type="number" step="0.01" value={f.monthly_premium} onChange={(e) => setF({ ...f, monthly_premium: e.target.value })} /></div>
-          <div><Label>Payment structure</Label><EnumSelect value={f.payment_structure} onChange={(v) => setF({ ...f, payment_structure: v })} options={PAYMENT_STRUCTURE_LABEL} /></div>
+          <div><Label>Premium / payment design</Label><EnumSelect value={f.payment_structure} onChange={(v) => setF({ ...f, payment_structure: v })} options={PAYMENT_STRUCTURE_LABEL} /></div>
+          {f.payment_structure === "paid_to_age" && (
+            <div><Label>Paid to age</Label><Input type="number" min="1" max="121" value={f.pay_to_age} onChange={(e) => setF({ ...f, pay_to_age: e.target.value })} /></div>
+          )}
           <div><Label>Rate class</Label><EnumSelect value={f.rate_class} onChange={(v) => setF({ ...f, rate_class: v })} options={RATE_CLASS_LABEL} /></div>
         </CardContent></Card>
 
