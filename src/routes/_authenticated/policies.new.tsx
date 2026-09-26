@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PRODUCT_TYPE_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL, POLICY_STATUS_LABEL } from "@/lib/labels";
+import { PRODUCT_TYPE_LABEL, OWNER_TYPE_LABEL, PAYMENT_STRUCTURE_LABEL, RATE_CLASS_LABEL, POLICY_STATUS_LABEL, TERM_DESIGN_LABEL } from "@/lib/labels";
 
 const searchSchema = z.object({ household: z.string().optional() });
 
@@ -42,6 +42,7 @@ function NewPolicy() {
 
   const [f, setF] = useState({
     policy_number: "", carrier: "", custom_carrier: "", product_type: "" as string,
+    term_design: "" as string, term_length_years: "", pay_to_age: "",
     insured_member_id: "", owner_name: "", owner_type: "" as string,
     face_amount: "", monthly_premium: "", payment_structure: "" as string,
     rate_class: "" as string, status: "active" as string,
@@ -69,6 +70,9 @@ function NewPolicy() {
       policy_number: f.policy_number || null, carrier: carrierValue,
       product_type: f.product_type as never,
       policy_type: PRODUCT_TYPE_LABEL[f.product_type as keyof typeof PRODUCT_TYPE_LABEL],
+      term_design: (f.product_type === "term" ? (f.term_design || null) : null) as never,
+      term_length_years: f.product_type === "term" && f.term_length_years ? Number(f.term_length_years) : null,
+      pay_to_age: f.payment_structure === "paid_to_age" && f.pay_to_age ? Number(f.pay_to_age) : null,
 
       owner_name: f.owner_name || null, owner_type: (f.owner_type || null) as never,
       face_amount: f.face_amount ? Number(f.face_amount) : null,
