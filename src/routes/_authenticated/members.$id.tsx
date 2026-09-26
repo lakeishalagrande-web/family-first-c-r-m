@@ -20,7 +20,8 @@ import {
   calcAge, fmtCurrency, fmtDate,
   POLICY_STATUS_LABEL, PREMIUM_FREQUENCY_LABEL, PRODUCT_TYPE_LABEL, productLabelOf, productTypeOf,
   BENEFICIARY_RELATIONSHIP_OPTIONS, mask,
-  TERM_DESIGN_LABEL, PAYMENT_STRUCTURE_LABEL, RIDER_TYPE_LABEL, policyDesignSummary, isAccidentOnly,
+  TERM_DESIGN_LABEL, PAYMENT_STRUCTURE_LABEL, RIDER_TYPE_LABEL, CITIZENSHIP_LABEL,
+  policyDesignSummary, isAccidentOnly, riderBaseLabel, type RiderCoverage,
 } from "@/lib/labels";
 
 import { formatPhone } from "@/components/phone-input";
