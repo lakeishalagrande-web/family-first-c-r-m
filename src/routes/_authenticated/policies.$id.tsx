@@ -225,32 +225,68 @@ function BeneficiariesPanel({ policyId, bens, onChange }: { policyId: string; be
   );
 }
 
-function RidersPanel({ policyId, riders, onChange }: { policyId: string; riders: Array<Record<string, unknown> & { id: string }>; onChange: () => void }) {
+type RiderMember = { id: string; first_name: string; last_name: string; relationship: string | null };
+type RiderRow = Record<string, unknown> & {
+  id: string; rider_type: "child" | "spouse" | "other_insured"; child_name: string;
+  covered_member_id: string | null; covered?: { id: string; first_name: string; last_name: string } | null;
+  coverage_amount: number | null; effective_date: string | null;
+  termination_age: number | null; termination_date: string | null;
+  conversion_eligible: boolean | null; conversion_notes: string | null;
+  date_of_birth: string | null; sex: string | null; beneficiary: string | null;
+  height_inches: number | null; weight_lbs: number | null; ssn_last4: string | null;
+};
+
+const EMPTY_RIDER = {
+  rider_type: "child" as "child" | "spouse" | "other_insured",
+  covered_member_id: "", child_name: "",
+  coverage_amount: "", effective_date: "",
+  termination_age: "", termination_date: "",
+  conversion_eligible: "" as "" | "yes" | "no", conversion_notes: "",
+  height_inches: "", weight_lbs: "", date_of_birth: "", sex: "", beneficiary: "", ssn: "",
+};
+
+function RidersPanel({ policyId, riders, members, onChange }: { policyId: string; riders: Array<Record<string, unknown> & { id: string }>; members: RiderMember[]; onChange: () => void }) {
   const [open, setOpen] = useState(false);
   const encryptFn = useServerFn(encryptAndStorePII);
   const reveal = useServerFn(revealPII);
   const [revealed, setRevealed] = useState<Record<string, string | undefined>>({});
-  const [f, setF] = useState({ child_name: "", height_inches: "", weight_lbs: "", date_of_birth: "", sex: "", beneficiary: "", ssn: "" });
+  const [f, setF] = useState({ ...EMPTY_RIDER });
+  const [saving, setSaving] = useState(false);
+
+  const selected = members.find((m) => m.id === f.covered_member_id);
+  const coveredName = selected ? `${selected.first_name} ${selected.last_name}` : f.child_name.trim();
 
   async function save() {
+    if (!coveredName) return toast.error("Choose the person covered, or type a name");
+    setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setSaving(false); return; }
     const { data, error } = await supabase.from("term_riders").insert({
       agent_id: user.id, policy_id: policyId,
-      child_name: f.child_name,
+      rider_type: f.rider_type,
+      covered_member_id: f.covered_member_id || null,
+      child_name: coveredName,
+      coverage_amount: f.coverage_amount ? Number(f.coverage_amount) : null,
+      effective_date: f.effective_date || null,
+      termination_age: f.termination_age ? Number(f.termination_age) : null,
+      termination_date: f.termination_date || null,
+      conversion_eligible: f.conversion_eligible === "" ? null : f.conversion_eligible === "yes",
+      conversion_notes: f.conversion_notes || null,
       height_inches: f.height_inches ? Number(f.height_inches) : null,
       weight_lbs: f.weight_lbs ? Number(f.weight_lbs) : null,
-      date_of_birth: f.date_of_birth || null, sex: f.sex || null,
+      date_of_birth: f.date_of_birth || selected?.id ? (f.date_of_birth || null) : null,
+      sex: f.sex || null,
       beneficiary: f.beneficiary || null,
     }).select().single();
-    if (error) return toast.error(error.message);
+    if (error) { setSaving(false); return toast.error(error.message); }
     if (f.ssn) {
       try { await encryptFn({ data: { recordType: "term_rider", recordId: data.id, field: "ssn", value: f.ssn } }); }
       catch (e) { toast.error("SSN: " + (e as Error).message); }
     }
-    toast.success("Added");
+    setSaving(false);
+    toast.success("Rider added");
     setOpen(false);
-    setF({ child_name: "", height_inches: "", weight_lbs: "", date_of_birth: "", sex: "", beneficiary: "", ssn: "" });
+    setF({ ...EMPTY_RIDER });
     onChange();
   }
   async function del(id: string) { if (!confirm("Delete rider?")) return; await supabase.from("term_riders").delete().eq("id", id); onChange(); }
@@ -262,13 +298,55 @@ function RidersPanel({ policyId, riders, onChange }: { policyId: string; riders:
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Add child term rider</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle className="font-display">Add term rider</DialogTitle></DialogHeader>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground max-w-xl">
+          Riders cover another person under this policy. They are not standalone policies — the covered person&apos;s
+          profile will show &ldquo;Covered as rider&rdquo; instead of showing them as a policy owner.
+        </p>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setF({ ...EMPTY_RIDER }); }}>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Add rider</Button></DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle className="font-display">Add rider</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Child name *</Label><Input value={f.child_name} onChange={(e) => setF({ ...f, child_name: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Rider type *</Label>
+                  <Select value={f.rider_type} onValueChange={(v) => setF({ ...f, rider_type: v as typeof f.rider_type })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(RIDER_TYPE_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Person covered</Label>
+                  <Select value={f.covered_member_id} onValueChange={(v) => setF({ ...f, covered_member_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select family member…" /></SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.first_name} {m.last_name}{m.relationship ? ` · ${m.relationship}` : ""}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {!f.covered_member_id && (
+                <div><Label>Name of person covered *</Label><Input value={f.child_name} onChange={(e) => setF({ ...f, child_name: e.target.value })} placeholder="If they aren't a family member record yet" /></div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Rider coverage amount</Label><Input type="number" value={f.coverage_amount} onChange={(e) => setF({ ...f, coverage_amount: e.target.value })} /></div>
+                <div><Label>Effective date</Label><Input type="date" value={f.effective_date} onChange={(e) => setF({ ...f, effective_date: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Termination age</Label><Input type="number" value={f.termination_age} onChange={(e) => setF({ ...f, termination_age: e.target.value })} placeholder="e.g. 25" /></div>
+                <div><Label>Termination date</Label><Input type="date" value={f.termination_date} onChange={(e) => setF({ ...f, termination_date: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Conversion eligible?</Label>
+                  <Select value={f.conversion_eligible} onValueChange={(v) => setF({ ...f, conversion_eligible: v as "yes" | "no" })}>
+                    <SelectTrigger><SelectValue placeholder="Unknown" /></SelectTrigger>
+                    <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Conversion notes</Label><Input value={f.conversion_notes} onChange={(e) => setF({ ...f, conversion_notes: e.target.value })} /></div>
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>DOB</Label><Input type="date" value={f.date_of_birth} onChange={(e) => setF({ ...f, date_of_birth: e.target.value })} /></div>
                 <div><Label>Sex</Label><Input value={f.sex} onChange={(e) => setF({ ...f, sex: e.target.value })} /></div>
@@ -283,20 +361,39 @@ function RidersPanel({ policyId, riders, onChange }: { policyId: string; riders:
                 <Input value={f.ssn} onChange={(e) => setF({ ...f, ssn: e.target.value })} placeholder="XXX-XX-XXXX" />
               </div>
             </div>
-            <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={save} disabled={!f.child_name}>Save</Button></DialogFooter>
+            <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={save} disabled={saving || !coveredName}>{saving ? "Saving…" : "Save"}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-      {riders.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No term riders.</CardContent></Card>}
+      {riders.length === 0 && <Card className="shadow-card"><CardContent className="py-10 text-center text-sm text-muted-foreground">No riders on this policy.</CardContent></Card>}
       <div className="grid gap-3 md:grid-cols-2">
         {riders.map((r) => {
-          const rr = r as Record<string, unknown> & { id: string; child_name: string; date_of_birth: string | null; sex: string | null; beneficiary: string | null; height_inches: number | null; weight_lbs: number | null; ssn_last4: string | null };
+          const rr = r as RiderRow;
+          const termAt = riderTerminationDate(rr);
           return (
             <Card key={rr.id} className="shadow-card">
               <CardContent className="p-4 space-y-1">
-                <div className="flex justify-between"><p className="font-medium">{rr.child_name}</p>
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <p className="font-medium">{rr.covered ? `${rr.covered.first_name} ${rr.covered.last_name}` : rr.child_name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge variant="outline" className="border-gold">{RIDER_TYPE_LABEL[rr.rider_type]}</Badge>
+                      {rr.covered_member_id
+                        ? <Link to="/members/$id" params={{ id: rr.covered_member_id }} className="text-xs text-primary hover:underline">View person</Link>
+                        : <span className="text-xs text-muted-foreground">Not linked to a family member</span>}
+                    </div>
+                  </div>
                   <Button variant="ghost" size="icon" onClick={() => del(rr.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Coverage {fmtCurrency(rr.coverage_amount != null ? Number(rr.coverage_amount) : null)} · Effective {fmtDate(rr.effective_date)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {rr.termination_age != null ? `Terminates at age ${rr.termination_age}` : "No termination age"}
+                  {termAt && ` · on ${fmtDate(termAt)}`}
+                  {rr.conversion_eligible != null && ` · Conversion ${rr.conversion_eligible ? "eligible" : "not eligible"}`}
+                </p>
+                {rr.conversion_notes && <p className="text-xs">{rr.conversion_notes}</p>}
                 <p className="text-xs text-muted-foreground">{rr.sex || "—"} · {fmtDate(rr.date_of_birth)} · {rr.height_inches || "—"}in / {rr.weight_lbs || "—"}lbs</p>
                 {rr.beneficiary && <p className="text-xs">Beneficiary: {rr.beneficiary}</p>}
                 {rr.ssn_last4 && (
@@ -315,6 +412,7 @@ function RidersPanel({ policyId, riders, onChange }: { policyId: string; riders:
     </div>
   );
 }
+
 
 function EditPolicyForm({ policy, onSaved }: { policy: Record<string, unknown> & { id: string }; onSaved: () => void }) {
   type P = Record<string, unknown> & { id: string };
