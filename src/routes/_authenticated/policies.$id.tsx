@@ -33,15 +33,18 @@ function PolicyDetail() {
       const [{ data: p }, { data: bens }, { data: riders }] = await Promise.all([
         supabase.from("policies").select("*, households(id, household_name), family_members:insured_member_id(first_name, last_name)").eq("id", id).maybeSingle(),
         supabase.from("beneficiaries").select("*").eq("policy_id", id).order("beneficiary_type"),
-        supabase.from("term_riders").select("*").eq("policy_id", id),
+        supabase.from("term_riders").select("*, covered:covered_member_id(id, first_name, last_name)").eq("policy_id", id),
       ]);
-      return { p, bens: bens ?? [], riders: riders ?? [] };
+      const { data: members } = p?.household_id
+        ? await supabase.from("family_members").select("id, first_name, last_name, relationship").eq("household_id", p.household_id).order("first_name")
+        : { data: [] };
+      return { p, bens: bens ?? [], riders: riders ?? [], members: members ?? [] };
     },
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.p) return <p>Not found.</p>;
-  const { p, bens, riders } = data;
+  const { p, bens, riders, members } = data;
 
   async function deletePolicy() {
     if (!confirm("Delete this policy?")) return;
