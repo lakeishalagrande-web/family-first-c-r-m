@@ -59,7 +59,7 @@ function MemberDetail() {
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.member) return <p>Not found.</p>;
-  const { member, policies, carriers } = data;
+  const { member, policies, carriers, riderCoverage } = data;
   const age = calcAge(member.date_of_birth);
   const refresh = () => qc.invalidateQueries({ queryKey: ["member", id] });
   const meds = (member.medications as Array<{ name: string; dosage?: string }> | null) ?? [];
@@ -90,6 +90,20 @@ function MemberDetail() {
                 ))}
               </div>
             )}
+            {riderCoverage.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {riderCoverage.map((r) => {
+                  const rr = r as RiderCoverage;
+                  return (
+                    <Badge key={rr.id} variant="outline" className="border-gold text-foreground">
+                      Covered as {RIDER_TYPE_LABEL[rr.rider_type]} on {riderBaseLabel(rr)}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+
 
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/households/$id", params: { id: member.household_id } })}>
