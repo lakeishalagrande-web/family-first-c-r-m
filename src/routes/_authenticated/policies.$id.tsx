@@ -63,10 +63,11 @@ function PolicyDetail() {
         <div className="flex flex-wrap items-end justify-between gap-3 mt-2">
           <div>
             <h1 className="font-display text-3xl font-bold">{p.carrier || "—"} · {p.policy_number || "no #"}</h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge variant={p.status === "active" ? "default" : p.status === "lapsed" ? "destructive" : "secondary"}>{p.status ? POLICY_STATUS_LABEL[p.status] : "—"}</Badge>
+              {isAccidentOnly(p) && <Badge variant="destructive">Accident-only — not life insurance</Badge>}
               <p className="text-sm text-muted-foreground">
-                {p.product_type ? PRODUCT_TYPE_LABEL[p.product_type] : "—"}
+                {policyDesignSummary(p)}
                 {(p.households as { id: string; household_name: string } | null) && (
                   <> · <Link to="/households/$id" params={{ id: (p.households as { id: string }).id }} className="text-primary hover:underline">
                     {(p.households as { household_name: string }).household_name}
