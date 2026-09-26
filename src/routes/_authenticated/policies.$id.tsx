@@ -274,7 +274,7 @@ function RidersPanel({ policyId, riders, members, onChange }: { policyId: string
       conversion_notes: f.conversion_notes || null,
       height_inches: f.height_inches ? Number(f.height_inches) : null,
       weight_lbs: f.weight_lbs ? Number(f.weight_lbs) : null,
-      date_of_birth: f.date_of_birth || selected?.id ? (f.date_of_birth || null) : null,
+      date_of_birth: f.date_of_birth || null,
       sex: f.sex || null,
       beneficiary: f.beneficiary || null,
     }).select().single();
