@@ -219,3 +219,49 @@ export function policyDesignSummary(p: {
   if (pay) parts.push(pay);
   return parts.length ? `${base} — ${parts.join(" · ")}` : base;
 }
+
+export const CITIZENSHIP_OPTIONS = ["yes", "no", "unknown"] as const;
+export const CITIZENSHIP_LABEL: Record<(typeof CITIZENSHIP_OPTIONS)[number], string> = {
+  yes: "Yes", no: "No", unknown: "Unknown",
+};
+
+// ---- Riders -----------------------------------------------------------------
+export type RiderCoverage = Tables["term_riders"]["Row"] & {
+  policy?: {
+    id: string;
+    carrier: string | null;
+    policy_number: string | null;
+    product_type: Enums["product_type"] | null;
+    policy_type: string | null;
+    term_design: Enums["term_design"] | null;
+    term_length_years: number | null;
+    payment_structure: Enums["payment_structure"] | null;
+    pay_to_age: number | null;
+    insured?: { id: string; first_name: string; last_name: string } | null;
+  } | null;
+};
+
+// "Dad's Whole Life — 20-Pay (Illinois Mutual)" style label for the base policy
+export function riderBaseLabel(r: RiderCoverage): string {
+  const p = r.policy;
+  if (!p) return "—";
+  const insured = p.insured ? `${p.insured.first_name} ${p.insured.last_name}` : null;
+  const design = policyDesignSummary(p);
+  const carrier = p.carrier || p.policy_number || null;
+  return [insured, design, carrier ? `(${carrier})` : null].filter(Boolean).join(" · ");
+}
+
+// Rider termination alert foundation: the date an alert should fire on.
+export function riderTerminationDate(r: {
+  termination_date?: string | null;
+  termination_age?: number | null;
+  date_of_birth?: string | null;
+}): string | null {
+  if (r.termination_date) return r.termination_date;
+  if (r.termination_age != null && r.date_of_birth) {
+    const dob = new Date(r.date_of_birth);
+    const d = new Date(Date.UTC(dob.getUTCFullYear() + r.termination_age, dob.getUTCMonth(), dob.getUTCDate()));
+    return d.toISOString().slice(0, 10);
+  }
+  return null;
+}
